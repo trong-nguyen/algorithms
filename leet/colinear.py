@@ -3,6 +3,10 @@ np.seterr(divide='ignore') # suppress div 0 warnings
 '''
 find the maximum points pass through a line
 
+Algorithm: basically we establish a polar coordinate with origin
+situated at each point and find colinear points by detecting identical
+theta coordinate.
+
 for each point:
     for other points:
         compute dx, dy
