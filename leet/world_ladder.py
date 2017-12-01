@@ -43,26 +43,59 @@ def create_adjacent_graph(start, end, collection):
     or by 1 character
     '''
 
-    # filter out the disconnected nodes
-    connected_nodes = filter(lambda w: dof(start, w) > 0 or
-        dof(end, w) > 0, collection)
+    # # filter out the disconnected nodes
+    # connected_nodes = filter(lambda w: dof(start, w) > 0 or
+    #     dof(end, w) > 0, collection)
+
+    # graph = {}
+
+    # for i, a in enumerate(connected_nodes):
+    #     for b in connected_nodes[i+1:]:
+    #         if is_adjacent(a, b):
+    #             graph[a] = graph.get(a, []) + [b]
+    #             graph[b] = graph.get(b, []) + [a]
+
+    # # connect the start word to the graph
+    # graph[start] = filter(lambda w: is_adjacent(start, w), connected_nodes)
+
+    # return graph
+
+    lookup = create_adjacent_graph2(start, end, collection)
 
     graph = {}
+    for word in [start] + collection:
+        for ic in enumerate(word):
+            nb = lookup[ic]
+            elligible = filter(lambda x: dof(word, x) == 1, nb)
 
-    for i, a in enumerate(connected_nodes):
-        for b in connected_nodes[i+1:]:
-            if is_adjacent(a, b):
-                graph[a] = graph.get(a, []) + [b]
-                graph[b] = graph.get(b, []) + [a]
-
-    # connect the start word to the graph
-    graph[start] = filter(lambda w: is_adjacent(start, w), connected_nodes)
+            graph[word] = graph.get(word, set()).union(elligible)
+        # graph[word].remove(word)
 
     return graph
 
 
+def create_adjacent_graph2(start, end, collection):
+    '''
+    to make an adjacent graph we can utilize the fact that
+    any connected node must have k-1 characters in common
+    build a
+    '''
+
+    if len(start) != len(end):
+        return {}
+
+    lookup = {}
+    for word in [start] + collection:
+        for i, c in enumerate(word):
+            if (i, c) not in lookup:
+                lookup[(i, c)] = set()
+            lookup[(i, c)].add(word)
+
+    return lookup
+
+
 def shortest(start, end, collection):
-    # adjacent_graph = create_adjacent_graph(start, end, collection)
+    adjacent_graph = create_adjacent_graph(start, end, collection)
 
     layer = [start]
     potential = {start: []}
@@ -71,8 +104,8 @@ def shortest(start, end, collection):
         radius += 1
         new_layer = set()
         for u in layer:
-            for v in filter(lambda w: is_adjacent(w, u), collection): # adjacent_graph[u]:
             # for v in filter(lambda w: is_adjacent(w, u), collection): # adjacent_graph[u]:
+            for v in adjacent_graph[u]:
                 p = (radius, u)
                 if v not in potential or not potential[v]:
                     new_layer.add(v)
@@ -165,8 +198,9 @@ def test():
 
     ]:
         potential = shortest(start, end, collection)
-        # result = retrieve_paths(start, end, potential)
-        # print result
+        result = retrieve_paths(start, end, potential)
+        print result
+        # print create_adjacent_graph(start, end, collection)
         # assert sorted(answer) == sorted(result)
 
 
