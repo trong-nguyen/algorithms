@@ -1,6 +1,7 @@
 def is_palindrome(x):
     if x < 10:
-        return False
+        return True
+
     s = str(x)
     return s == s[::-1]
 
@@ -13,6 +14,10 @@ def _closest_palindrome(x, palindromes, visited):
         return
 
     visited.add(x)
+
+    if x <= 10:
+        palindromes.add(x-1)
+        return
 
     # print 'visit', x
 
@@ -46,33 +51,55 @@ def _closest_palindrome(x, palindromes, visited):
             _closest_palindrome(x_right, palindromes, visited)
 
 def closest_palindrome(x):
-    if x < 10:
-        return 11
+    if x <= 10:
+        return x-1
 
     palindromes = set()
     visited = set()
 
-    _closest_palindrome(x, palindromes, visited)
+    if is_palindrome(x):
+        _closest_palindrome(x-1, palindromes, visited)
+        _closest_palindrome(x+1, palindromes, visited)
+    else:
+        _closest_palindrome(x, palindromes, visited)
 
     if x in palindromes:
         palindromes.remove(x)
 
     lengths = map(lambda p: (difference(x,p), p), palindromes)
-    return min(lengths, key=lambda l: l[0])[1]
 
+    # print 'found {} palindromes in {} visited'.format(len(palindromes), len(visited))
+    return min(lengths)[1]
 
+# Leetcode solution class
+class Solution(object):
+    def nearestPalindromic(self, n):
+        """
+        :type n: str
+        :rtype: str
+        """
+        return str(closest_palindrome(int(n)))
 
 def test():
     for number, answer in [
         # (19999999998, 1)
-        (1, 11),
+        (1, 0),
+        (11, 9),
+        (99199, 9),
+        (10, 9),
         (12, 11),
         (19, 22),
         (15, 11),
-        (19997, 20002),
-        (29999, 30003),
-        (69999, 69996),
-        (49999, 49994),
+        (807045053224792883, 0)
+        # (19997, 20002),
+        # (29999, 30003),
+        # (69999, 69996),
+        # (49999, 49994),
+        # (38746587, 0),
+        # (98769026938745, 0),
+        # (19994999, 0),
+        # (298736498723874659, 298736498894637892),
+        # (299376498723874459, 298736498894637892),
     ]:
 
         result = closest_palindrome(number)
