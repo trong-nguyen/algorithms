@@ -66,12 +66,11 @@ def traverse_palindromes(x, palindromes, visited):
         if s[-i-1] == s[i]:
             continue
 
-        units = 10 ** i
         left = int(s[i]) - int(s[-i-1])
         right = [10, -10][int(left > 0)] + left
 
         for shift in (left, right):
-            x_next = x + shift * units
+            x_next = x + shift * 10 ** i
             traverse_palindromes(x_next, palindromes, visited)
 
         break
@@ -100,7 +99,7 @@ def closest_palindrome(x):
 
     lengths = map(lambda p: (difference(x,p), p), palindromes)
 
-    # print 'found {} palindromes in {} visited'.format(len(palindromes), len(visited))
+    print 'found {} palindromes in {} visited'.format(len(palindromes), len(visited))
     return min(lengths)[1]
 
 # Leetcode solution class
@@ -133,6 +132,8 @@ def test():
         (298736498723874659, 298736498894637892),
         (299376498723874459, 299376498894673992),
         (2034509299376498723874459, 2034509299376739929054302),
+        (283745238034509299376498723874459, 283745238034509303905430832547382),
+        (2837452380345092993764987238744598364967, 2837452380345092993773992905430832547382),
     ]:
 
         result = closest_palindrome(number)
