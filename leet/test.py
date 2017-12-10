@@ -27,7 +27,7 @@ def test():
     ]:
         # res = bisect([letters[-1]] + letters + [letters[0]], target)
         res = bisect(letters, target, letters[0])
-        print res
+        assert res == ans, 'expected {}'.format(ans)
 
 if __name__ == '__main__':
     test()

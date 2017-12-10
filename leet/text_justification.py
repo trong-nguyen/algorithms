@@ -21,16 +21,26 @@ Note: Each word is guaranteed not to exceed L in length.
 """
 
 def full_justify(words, width):
+    if len(words) == 1 and not words[0]:
+        return [" " * width]
+
     buckets = divide(words, width)
-    return map(lambda w: add_paddings(w, width), buckets)
+    print buckets
+    first_lines = map(lambda w: add_paddings(w, width), buckets[:-1])
+    last_line = ' '.join(buckets[-1])
+    last_line += ' ' * (width - len(last_line))
+    return first_lines + [last_line]
 
 def divide(words, width):
     buckets = []
     line = []
     remained_space = width
     for word in words:
-        if len(word) < remained_space:
-            remained_space -= len(word) + 1 # 1 for padding
+        if len(word) == remained_space == width:
+            buckets.append([word])
+
+        elif len(word) < remained_space:
+            remained_space -= len(word) + bool(line)# 1 for padding
             line.append(word)
         else:
             buckets.append(line)
@@ -42,7 +52,20 @@ def divide(words, width):
 
 
 def add_paddings(words, width):
-    return ' '.join(words)
+    spaces = width - sum(map(len, words))
+    if len(words) == 1:
+        return words[0] + ' ' * spaces
+
+    n = len(words) - 1
+    even = spaces / n
+    uneven = spaces % n
+    slots = [' ' * even] * n
+    if uneven > 0:
+        slots[:uneven] = map(lambda x: x+' ', slots[:uneven])
+
+    res = words[0] + ''.join(map(lambda x: x[0] + x[1], zip(slots, words[1:])))
+
+    return res
 
 class Solution(object):
     def fullJustify(self, words, maxWidth):
@@ -55,16 +78,20 @@ class Solution(object):
 
 def test():
     sol = Solution()
-    words = ["This", "is", "an", "example", "of", "text", "justification."]
-    width = 16
-    res = sol.fullJustify(words, width)
-    ans = [
-       "This    is    an",
-       "example  of text",
-       "justification.  "
-    ]
-    print res
-    # assert res == ans, res
+    for words, width, ans in [
+        (["This", "is", "an", "example", "of", "text", "justification."], 16, [
+               "This    is    an",
+               "example  of text",
+               "justification.  "
+            ]),
+        (["a"], 1, ["a"]),
+        ([""], 2, ["  "]),
+        (["What","must","be","shall","be."], 12, ["What must be","shall be.   "]),
+        (["Here","is","an","example","of","text","justification."], 14, ["Here   is   an","example     of","text          ","justification."])
+    ]:
+        res = sol.fullJustify(words, width)
+        print res
+        assert res == ans, res
 
 if __name__ == '__main__':
     test()
