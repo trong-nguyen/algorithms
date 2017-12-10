@@ -47,6 +47,18 @@ Using a LinkedHashMap:
             * delete that key from H
             * pluck the node off the L
             * reinsert the node to the front
+
+Cost: O(1) for access and insertions
+
+Facts:
+Only nodes tail node position really matters (since we need to rip it off when capacity reached)
+Others are more or less equal in terms of access priority (we keep them in the map). But the less frequently they are accessed
+the more they move closer to the tail, since access nodes are inserted to the head.
+
+Data structure that:
+    - Allows O(1) insertion and removals: LinkedList
+    - Allow O(1) accessing: HashMap
+
 """
 
 class DoublyLinkedNode(object):
