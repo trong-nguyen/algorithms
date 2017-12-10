@@ -90,7 +90,6 @@ def test():
         (["Here","is","an","example","of","text","justification."], 14, ["Here   is   an","example     of","text          ","justification."])
     ]:
         res = sol.fullJustify(words, width)
-        print res
         assert res == ans, res
 
 if __name__ == '__main__':
