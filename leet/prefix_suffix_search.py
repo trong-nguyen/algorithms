@@ -20,23 +20,56 @@ import re
 
 DEBUG = True
 
+class Node(object):
+    """docstring for Node"""
+    def __init__(self, weight=float('-inf')):
+        super(Node, self).__init__()
+        self.weight = weight
+        self.children = {}
+
+class Tree(object):
+    """docstring for Tree"""
+    def __init__(self, words):
+        super(Tree, self).__init__()
+        self.root = Node()
+        self.build(words)
+
+    def build(self, words, inversed_word=False):
+        for weight, word in enumerate(words):
+            w = word if not inversed_word else word[::-1]
+            self.add_word(self.root, word, weight)
+
+
+    @staticmethod
+    def add_word(parent, word, weight):
+        parent.weight = weight
+
+        if not word:
+            return
+
+        char = word[0]
+        if char not in parent.children:
+            new_node = Node(weight)
+            parent.children[char] = new_node
+
+        Tree.add_word(new_node, word[1:], weight)
+
+def search_word(word, root):
+    if not word or word[0] not in root.children:
+        return node.weight
+
+    return search_word(word[1:], root.children[word[0]])
+
+
+
 class WordFilter(object):
 
     def __init__(self, words):
         """
         :type words: List[str]
         """
-        DELIM = '@'
-        weights = {}
-        flatten_word = ''
-        max_weight = len(words)
-        for i, word in enumerate(words[::-1]):
-            weights[len(flatten_word)] = max_weight - 1 - i
-            flatten_word += DELIM + word
-
-        self.flatten_word = flatten_word + DELIM
-        self.weights = weights
-        self.DELIM = DELIM
+        self.prefix_tree = Tree(words)
+        self.suffix_tree = Tree(words, inversed_word=True)
 
     def f(self, prefix, suffix):
         """
@@ -44,58 +77,10 @@ class WordFilter(object):
         :type suffix: str
         :rtype: int
         """
+        prefix_weight = search_word(prefix, self.prefix_tree.root)
+        suffix_weight = search_word(suffix, self.suffix_tree.root)
 
-
-
-        MAX_LENGTH = 10
-        np = len(prefix)
-        ns = len(suffix)
-
-        NOT_FOUND = -1
-
-        # overlap
-        if np + ns > MAX_LENGTH and prefix[MAX_LENGTH-ns:] != suffix[:np+ns-MAX_LENGTH]:
-            # if DEBUG:
-            #     print '\n'
-            #     print prefix, suffix
-            #     print prefix[MAX_LENGTH-ns:], suffix[:np]
-            #     print np, ns
-            #     print 'Mismatched overlap'
-            return NOT_FOUND
-
-        components = [self.DELIM, prefix, suffix]
-        if not prefix:
-            pattern = re.compile(r'{0}[a-z]*{2}{0}'.format(*components))
-        elif not suffix:
-            pattern = re.compile(r'{0}{1}[a-z]*{0}'.format(*components))
-        else:
-            pattern = re.compile(r'(?={0}{1}[a-z]*{0}){0}[a-z]*{2}{0}'.format(*components))
-
-        match = pattern.search(self.flatten_word)
-
-        def print_debug():
-            print self.flatten_word
-            print '\tp:', prefix
-            print '\ts:', suffix
-            print '\tpattern:', pattern.pattern
-
-        if not match:
-            # if DEBUG:
-            #     print '\n'
-            #     print_debug()
-            #     print 'word not found'
-            return NOT_FOUND
-        else:
-            idx = match.start()
-            # if DEBUG:
-            #     print '\n'
-            #     print match.group()
-            #     print idx, self.weights[idx]
-            #     print_debug()
-            #     print 'word found'
-            return self.weights[idx]
-
-
+# [[["abbbababbb","baaabbabbb","abababbaaa","abbbbbbbba","bbbaabbbaa","ababbaabaa","baaaaabbbb","babbabbabb","ababaababb","bbabbababa"]],["","abaa"],["babbab",""],["ab","baaa"],["baaabba","b"],["abab","abbaabaa"],["","aa"],["","bba"],["","baaaaabbbb"],["ba","aabbbb"],["baaa","aabbabbb"]]
 
 from utils import fail_string
 
