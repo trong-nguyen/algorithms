@@ -19,6 +19,7 @@ words[i] and prefix, suffix queries consist of lowercase letters only.
 import re
 
 DEBUG = True
+TERMITE = '$'
 
 class Node(object):
     """docstring for Node"""
@@ -26,6 +27,7 @@ class Node(object):
         super(Node, self).__init__()
         self.weight = weight
         self.children = {}
+        self.reachables = {}
 
 class Tree(object):
     """docstring for Tree"""
@@ -34,33 +36,92 @@ class Tree(object):
         self.root = Node()
         self.build(words)
 
-    def build(self, words, inversed_word=False):
+    def build(self, words):
         for weight, word in enumerate(words):
-            w = word if not inversed_word else word[::-1]
             self.add_word(self.root, word, weight)
 
+    def __str__(self):
+        output = ''
+        heap = [self.root]
+        labels = ['^']
+        while heap:
+            node = heap.pop(0)
+            node_label = labels.pop(0)
+            output += '{}: {}, next: {}, final: {}\n'.format(
+                    node_label,
+                    node.weight,
+                    node.children.keys(),
+                    node.reachables.keys()
+                )
+            heap += node.children.values()
+            labels += node.children.keys()
+        return output
 
     @staticmethod
     def add_word(parent, word, weight):
         parent.weight = weight
 
+        # all reachable nodes from parent plus the tail
+        for c in word + TERMITE:
+            parent.reachables[c] = max(parent.reachables.get(c, weight), weight)
+
         if not word:
+            node = parent.children.get(TERMITE, Node())
+            node.weight = max(node.weight, weight)
+            parent.children[TERMITE] = node
             return
+
 
         char = word[0]
         if char not in parent.children:
-            new_node = Node(weight)
-            parent.children[char] = new_node
+            parent.children[char] = Node(weight)
 
-        Tree.add_word(new_node, word[1:], weight)
+        node = parent.children[char]
 
-def search_word(word, root):
-    if not word or word[0] not in root.children:
-        return node.weight
+        Tree.add_word(node, word[1:], weight)
 
-    return search_word(word[1:], root.children[word[0]])
+def search_prefix_node(word, parent):
+    # return the most specific node to the path defined by word
+    # i.e. if the word is abc it return the node c situated at root->a->b->c
+    if not word:
+        return parent
+    elif word[0] not in parent.children:
+        return None
+
+    return search_prefix_node(word[1:], parent.children[word[0]])
+
+def search_prefix_suffix(prefix, suffix, root_node):
+    NOT_FOUND = -1
+    prefix_node = search_prefix_node(prefix, root_node)
+    if not prefix_node:
+        return NOT_FOUND
+
+    if not suffix:
+        return prefix_node.reachables[TERMITE]
+
+    # linkable cases
+    suffix_char = suffix[0]
+    max_weight = prefix_node.reachables.get(suffix_char, NOT_FOUND)
+
+    # stackable cases
+    for i, c in enumerate(suffix):
+        if stackable(prefix, suffix, i):
+            suffix_path = suffix[i+1:]
+            # if it matches from 0 to i
+            # find if there is a path from i+1 to end of suffix
+            node = search_prefix_node(suffix_path, prefix_node)
+            if node and TERMITE in node.children:
+                max_weight = max(max_weight, node.children[TERMITE].weight)
 
 
+    # if DEBUG:
+    #     print 'stackable'
+    return max_weight
+
+def stackable(prefix, suffix, i):
+    # check if prefix matches part of suffix (1 or more)
+    # i.e. prefix=abcd matches suffix=cd at i=1
+    return prefix.endswith(suffix[:i+1])
 
 class WordFilter(object):
 
@@ -69,7 +130,8 @@ class WordFilter(object):
         :type words: List[str]
         """
         self.prefix_tree = Tree(words)
-        self.suffix_tree = Tree(words, inversed_word=True)
+
+        print self.prefix_tree
 
     def f(self, prefix, suffix):
         """
@@ -77,8 +139,7 @@ class WordFilter(object):
         :type suffix: str
         :rtype: int
         """
-        prefix_weight = search_word(prefix, self.prefix_tree.root)
-        suffix_weight = search_word(suffix, self.suffix_tree.root)
+        return search_prefix_suffix(prefix, suffix, self.prefix_tree.root)
 
 # [[["abbbababbb","baaabbabbb","abababbaaa","abbbbbbbba","bbbaabbbaa","ababbaabaa","baaaaabbbb","babbabbabb","ababaababb","bbabbababa"]],["","abaa"],["babbab",""],["ab","baaa"],["baaabba","b"],["abab","abbaabaa"],["","aa"],["","bba"],["","baaaaabbbb"],["ba","aabbbb"],["baaa","aabbabbb"]]
 
@@ -128,6 +189,7 @@ def test_leet():
             try:
                 assert res == ans
             except AssertionError as e:
+                print case
                 print fail_string(res=res, ans=ans)
                 sys.exit(0)
 
