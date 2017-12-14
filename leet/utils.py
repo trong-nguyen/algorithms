@@ -1,9 +1,10 @@
-def fail_string(res, ans):
+def fail_string(res, ans, case=None):
     out = (
         '\n---TEST FAILED---\n'
-        'Result:   {}\n'
-        'Expected: {}\n'
+        'Case:     {case}\n'
+        'Result:   {res}\n'
+        'Expected: {ans}\n'
         '-----------------'
-        ).format(res, ans)
+        ).format(res=res, ans=ans, case=case if case else '')
 
     return out

@@ -15,7 +15,8 @@ def test():
         try:
             assert res == ans
         except AssertionError as e:
-            sys.exit(fail_string(res=res, ans=ans))
+            status = fail_string(res=res, ans=ans, case=case)
+            sys.exit(status)
 
 if __name__ == '__main__':
     test()
