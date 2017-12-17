@@ -14,6 +14,14 @@ class BinaryNode(object):
         self.left = None
         self.right = None
 
+    def children(self):
+        c = []
+        if self.left:
+            c += self.left
+        if self.right:
+            c += self.right
+        return c
+
 class ColorNode(BinaryNode):
     """
     docstring for ColorNode
@@ -36,8 +44,6 @@ class BinarySearchTree(object):
         self.root = None
 
     def insert(self, value):
-        root = self.root
-
         cursor = self.walk_to(value)
 
         # if a node with identical value already present
@@ -57,10 +63,12 @@ class BinarySearchTree(object):
         # of the parent node (cursor)
         node.parent = cursor
 
-        if cursor.left is None:
+        if value < cursor.value:
             cursor.left = node
-        else:
+        elif value > cursor.value:
             cursor.right = node
+        else:
+            raise ValueError('identical value found')
 
         # for efficiency, we return the inserted node
         # for inherited class
@@ -137,15 +145,21 @@ class RedBlackTree(BinarySearchTree):
         if inserted.parent.color == BLACK:
             return
 
-        # 3
         parent = inserted.parent
         grand = parent.parent
-
-        # if not grand
-
-
         uncle = [grand.left, grand.right][parent is grand.left]
 
+        # 3
+        if uncle is not None and uncle.color == RED:
+            parent.color = BLACK
+            uncle.color = BLACK
+
+        # 4
+        # None is considered black
+        if uncle is None or uncle.color == BLACK:
+            return
+
+        # 4
         if not uncle:
             parent.color = BLACK
             return
@@ -158,18 +172,74 @@ class RedBlackTree(BinarySearchTree):
         assert parent.color == RED and uncle.color == BLACK
 
 
-    def __str__(self):
-        output = ''
+    def clone(self, spaces):
+        """
+        create a cloned tree with space delimiters
+        """
+        def make_clone_node(idx, original_node):
+            return BinaryNode({
+                'idx': idx,
+                'val': '' if not original_node else '{}:{}'.format(original_node.value, ['O', 'X'][original_node.color==ColorNode.BLACK])
+            })
+
+        n = spaces
+        cloned_root = make_clone_node(idx=n, original_node=self.root)
+        cloned_heap = [cloned_root]
         heap = [self.root]
+        height = 0
         while heap:
-            output += str(['{}:{}'.format(i.value, ['R','B'][i.color==ColorNode.BLACK]) for i in heap]) + '\n'
+            height += 1
+            next_heap = []
+            next_clones = []
+            unit = n / (2 ** height)
+            if unit <= 0:
+                raise ValueError('increase spaces for cloning, {} insufficient, reached height {}'.format(spaces, height))
+
+            for node, cloned_node in zip(heap, cloned_heap):
+                if node.left:
+                    cloned_node.left = make_clone_node(
+                        idx=cloned_node.value['idx'] - unit,
+                        original_node=node.left,
+                    )
+                    print cloned_node.left.value
+                    next_heap.append(node.left)
+                    next_clones.append(cloned_node.left)
+                if node.right:
+                    cloned_node.right = make_clone_node(
+                        idx=cloned_node.value['idx'] + unit,
+                        original_node=node.right,
+                    )
+                    print cloned_node.right.value
+                    next_heap.append(node.right)
+                    next_clones.append(cloned_node.right)
+
+            print [h.value for h in heap], height
+            heap = filter(bool, next_heap)
+            cloned_heap = filter(bool, next_clones)
+
+        return cloned_root
+
+    def __str__(self):
+        n = 2**6
+        cell = 6
+        cell_form = '{{:{}}}'.format(cell)
+        cloned_root = self.clone(n)
+        heap = [cloned_root]
+        output = []
+        while heap:
+            row = list(' ' * n * cell)
             next_heap = []
             for node in heap:
                 next_heap += [node.left, node.right]
-            next_heap = filter(bool, next_heap)
-            heap = next_heap
+                meta = node.value
+                s = cell_form.format(meta['val'])
+                offset = meta['idx']
+                row[offset:offset+cell] = list(s)
 
-        return output
+            output.append(''.join(row))
+            heap = filter(bool, next_heap)
+
+        return '\n'.join(output)
 
 import random
 
@@ -191,8 +261,8 @@ def test():
     assert tree.find(n) is None
 
     tree = RedBlackTree()
-    for i in range(n):
-        tree.insert(random.randint(0, n))
+    for i in range(16):
+        tree.insert(random.randint(0, 16))
     print tree
 
 if __name__ == '__main__':

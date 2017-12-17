@@ -12,14 +12,12 @@ class Solution(object):
             mem[idx] = min(cost[-1], cost[-2])
             return
 
-        tries = [cost[idx], cost[idx+1]]
-        for i, take in enumerate([idx+1, idx+2]):
+        for take in [idx+1, idx+2]:
             if take not in mem:
                 self._minCostClimbingStairs(cost, take, mem)
 
-            tries[i] += mem[take]
 
-        mem[idx] = min(tries)
+        mem[idx] = min(cost[idx] + mem[idx+1], cost[idx+1] + mem[idx+2])
 
     def minCostClimbingStairs(self, cost):
         mem = {}
