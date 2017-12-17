@@ -42,6 +42,7 @@ class BinarySearchTree(object):
     def __init__(self):
         super(BinarySearchTree, self).__init__()
         self.root = None
+        self.count = 0
 
     def insert(self, value):
         cursor = self.walk_to(value)
@@ -51,6 +52,7 @@ class BinarySearchTree(object):
         if cursor and cursor.value == value:
             return cursor
 
+        self.count += 1
         node = self.Node(value)
 
         # if cursor is None, we are at the root
@@ -180,6 +182,7 @@ class RedBlackTree(BinarySearchTree):
             return BinaryNode({
                 'idx': idx,
                 'val': '' if not original_node else '{}:{}'.format(original_node.value, ['O', 'X'][original_node.color==ColorNode.BLACK])
+                # 'val': '' if not original_node else '{}:{}'.format(idx, ['O', 'X'][original_node.color==ColorNode.BLACK])
             })
 
         n = spaces
@@ -193,7 +196,9 @@ class RedBlackTree(BinarySearchTree):
             next_clones = []
             unit = n / (2 ** height)
             if unit <= 0:
-                raise ValueError('increase spaces for cloning, {} insufficient, reached height {}'.format(spaces, height))
+                print 'Warning, unbalanced tree: n={}, current height={}'.format(self.count, height)
+                # raise ValueError('increase spaces for cloning, {} insufficient, reached height {}'.format(n, height))
+                unit = 1
 
             for node, cloned_node in zip(heap, cloned_heap):
                 if node.left:
@@ -201,7 +206,6 @@ class RedBlackTree(BinarySearchTree):
                         idx=cloned_node.value['idx'] - unit,
                         original_node=node.left,
                     )
-                    print cloned_node.left.value
                     next_heap.append(node.left)
                     next_clones.append(cloned_node.left)
                 if node.right:
@@ -209,37 +213,39 @@ class RedBlackTree(BinarySearchTree):
                         idx=cloned_node.value['idx'] + unit,
                         original_node=node.right,
                     )
-                    print cloned_node.right.value
                     next_heap.append(node.right)
                     next_clones.append(cloned_node.right)
 
-            print [h.value for h in heap], height
             heap = filter(bool, next_heap)
             cloned_heap = filter(bool, next_clones)
 
         return cloned_root
 
     def __str__(self):
-        n = 2**6
-        cell = 6
+        # compute necessary capacity
+        n = 2
+        while n < 2*self.count:
+            n *= 2
+
+        cell = 3
         cell_form = '{{:{}}}'.format(cell)
         cloned_root = self.clone(n)
         heap = [cloned_root]
         output = []
         while heap:
-            row = list(' ' * n * cell)
+            row = list(' ' * 2 * n * cell)
             next_heap = []
             for node in heap:
                 next_heap += [node.left, node.right]
                 meta = node.value
                 s = cell_form.format(meta['val'])
-                offset = meta['idx']
+                offset = meta['idx'] * cell
                 row[offset:offset+cell] = list(s)
 
             output.append(''.join(row))
             heap = filter(bool, next_heap)
 
-        return '\n'.join(output)
+        return '\nRED-BLACK tree visualization:\n' + '\n'.join(output)
 
 import random
 
@@ -261,8 +267,8 @@ def test():
     assert tree.find(n) is None
 
     tree = RedBlackTree()
-    for i in range(16):
-        tree.insert(random.randint(0, 16))
+    for i in range(12):
+        tree.insert(random.randint(0, 6))
     print tree
 
 if __name__ == '__main__':
