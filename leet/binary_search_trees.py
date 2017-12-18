@@ -61,9 +61,9 @@ class BinaryNode(object):
         return self.right is not None
 
     def __str__(self):
-        l = 'na' if not self.left else str(self.left.value)
-        r = 'na' if not self.right else str(self.right.value)
-        p = 'na' if not self.parent else str(self.parent.value)
+        l, r, p = ['na' if not nb else str(nb.value) for nb in [
+            self.left, self.right, self.parent
+        ]]
         output = '{:^19}'.format(p)
         output += '\n{:<5} {:^7} {:>5}'.format(l, '[{}]'.format(self.value), r)
         return output
@@ -91,6 +91,7 @@ class BinarySearchTree(object):
         super(BinarySearchTree, self).__init__()
         self.root = None
         self.count = 0
+        self.height = -1
 
     def insert(self, value):
         cursor = self.walk_to(value)
@@ -206,6 +207,8 @@ class RedBlackTree(BinarySearchTree):
         if uncle is not None and uncle.color == RED:
             parent.color = BLACK
             uncle.color = BLACK
+            grand.color = RED
+            self.color(grand)
             return
 
         # 4
@@ -215,24 +218,20 @@ class RedBlackTree(BinarySearchTree):
             # step 1
             if grand.has_left_branch() and inserted is grand.left.right:
                 parent.rotate(BinaryNode.RLEFT)
-                node = parent.left
+                node = inserted.left
             elif grand.has_right_branch() and inserted is grand.right.left:
                 parent.rotate(BinaryNode.RRIGHT)
-                node = parent.right
+                node = inserted.right
 
             # step 2
             if node is node.parent.left:
                 grand.rotate(BinaryNode.RRIGHT)
             else:
-                try:
-                    grand.rotate(BinaryNode.RLEFT)
-                except:
-                    print self
-                    raise
+                grand.rotate(BinaryNode.RLEFT)
 
             # switch color
             grand.color = ColorNode.RED
-            inserted.color = ColorNode.BLACK
+            node.parent.color = ColorNode.BLACK
 
 
         self.correct_root()
@@ -245,6 +244,32 @@ class RedBlackTree(BinarySearchTree):
             self.root = self.root.parent
 
         return self.root
+
+    def set_root(self, root):
+        assert root is not None, 'Set root must exist'
+        assert root.parent is None, 'Set root must not have parent'
+
+        self.root = root
+        self.height, self.count = self.statistics()
+
+    def statistics(self):
+        if not self.root:
+            return 0, 0
+
+        height = 0
+        queue = [self.root]
+        count = 1
+        height = 0
+        while queue:
+            next_queue = []
+            for node in queue:
+                next_queue += node.children()
+
+            height += 1
+            count += len(next_queue)
+            queue = next_queue
+        return height, count
+
 
 
     def clone(self, spaces):
@@ -266,7 +291,6 @@ class RedBlackTree(BinarySearchTree):
         heap = [self.root]
         height = 0
         while heap:
-            print [h.value for h in heap]
             height += 1
             if height > self.count:
                 print 'excessive tree height'
@@ -304,9 +328,9 @@ class RedBlackTree(BinarySearchTree):
 
     def __str__(self):
         # compute necessary capacity
-        n = 2
-        while n < self.count:
-            n *= 2
+        height, count = self.statistics()
+        print 'height', height
+        n = 2 * height
 
         cell = 3
         cell_form = '{{:{}}}'.format(cell)
@@ -339,8 +363,8 @@ def test_rotate_left():
     nodes[1].parent, nodes[3].left = nodes[3], nodes[1]
 
     tree = RedBlackTree()
-    tree.count = 3
-    tree.root = nodes[3]
+    tree.set_root(nodes[3])
+    print 'SPEcal', tree.count, tree.height
 
     nodes[1].rotate(BinaryNode.RLEFT)
 
@@ -359,8 +383,7 @@ def test_rotate_right():
     nodes[2].parent, nodes[3].left = nodes[3], nodes[2]
 
     tree = RedBlackTree()
-    tree.count = 3
-    tree.root = nodes[3]
+    tree.set_root(nodes[3])
 
     nodes[2].rotate(BinaryNode.RRIGHT)
 
@@ -372,35 +395,52 @@ def test_rotate_right():
     assert not nodes[1].left
     assert not nodes[3].right
 
-def test():
-    # tree = BinarySearchTree()
+def test_binary_tree():
+    tree = BinarySearchTree()
 
-    # n = 100
-    # for i in range(n-1, -1, -1):
-    #     tree.insert(i)
+    n = 100
+    for i in range(n-1, -1, -1):
+        tree.insert(i)
 
-    # print tree
+    print tree
 
-    # for i in range(n):
-    #     try:
-    #         assert tree.find(i).value == i
-    #     except AssertionError as e:
-    #         print 'Cannot find', str(i)
+    for i in range(n):
+        try:
+            assert tree.find(i).value == i
+        except AssertionError as e:
+            print 'Cannot find', str(i)
 
-    # assert tree.find(n) is None
+    assert tree.find(n) is None
 
-
+def test_red_black_tree():
+    n = 16
     left_tree = RedBlackTree()
-    for i in range(6):
-        left_tree.insert(6-i)
+    for i in range(n):
+        left_tree.insert(n-i)
     print left_tree
 
     right_tree = RedBlackTree()
-    for i in range(6):
+    for i in range(n):
         right_tree.insert(i)
     print right_tree
+
+def test_red_black_height():
+    for d in range(1, 15):
+        n = 2 ** d
+        tree = RedBlackTree()
+        for i in range(n):
+            # tree.insert(i)
+            tree.insert(random.randint(0, 10)) # CHECK THIS, OVERLAP ITEMS CAUSE PROBLEMS
+
+        h, c = tree.statistics()
+        print 'Tree height x count: {:>3} x {}'.format(h, c)
+
+
+
 
 if __name__ == '__main__':
     test_rotate_left()
     test_rotate_right()
-    test()
+    test_binary_tree()
+    test_red_black_tree()
+    test_red_black_height()
