@@ -27,39 +27,67 @@ class BinaryNode(object):
         return c
 
     def rotate(self, direction):
+        """
+        root is the higher node (in height) and the parent of the pivot
+        pivot is the rotated node and the child of the root
+        after rotation root becomes child of pivot
+        left rotation pivot is on the right
+        right rotation pivot is on the left
+        diagram https://upload.wikimedia.org/wikipedia/commons/2/23/Tree_rotation.png
+              G          G
+              |          |
+              R  Left->  P
+               \        /
+                P      R
+
+              G          G
+              |          |
+              P  <-Right Root
+               \        /
+                R      Pivot
+        """
+
         assert direction in [self.RLEFT, self.RRIGHT]
 
-        pivot = self
-        rotatee = pivot.right if direction == self.RLEFT else pivot.left
-        parent = pivot.parent
-        if rotatee is None:
+        root = self
+        pivot = root.right if direction == self.RLEFT else root.left
+        grand = root.parent
+        if pivot is None:
             status = (
                 '{} rotation error, neighbor empty\n'
-                'Center:\n{}\n'
-                'Rotatee:\n{}\n'
-                'Parent:\n{}'
+                'Root:\n{}\n'
+                'Pivot:\n{}\n'
+                'Grand:\n{}'
                 ).format('Left' if direction == self.RLEFT else 'Right',
-                    pivot, rotatee, parent)
+                    root, pivot, grand)
             raise ValueError(status)
 
         if direction == self.RLEFT:
-            pivot.right = rotatee.left
-            pivot.parent, rotatee.left = rotatee, pivot
+            root.right = pivot.left
+            # transfer of middle branch, EASY to forget, serious bug
+            middle_branch = pivot.left
+            pivot.left = root
         else:
-            pivot.left = rotatee.right
-            pivot.parent, rotatee.right = rotatee, pivot
+            root.left = pivot.right
+            # transfer of middle branch
+            middle_branch = pivot.right
+            pivot.right = root
+
+        root.parent = pivot
+        if middle_branch:
+            middle_branch.parent = root
 
 
 
-        rotatee.parent = parent
-        if parent is None:
+        pivot.parent = grand
+        if grand is None:
             return # pivot is root
 
         # else update parent's children accordingly
-        if pivot is parent.right:
-            parent.right = rotatee
+        if grand.right is root:
+            grand.right = pivot
         else:
-            parent.left = rotatee
+            grand.left = pivot
 
 
     def has_left_branch(self):
@@ -241,6 +269,7 @@ class RedBlackTree(BinarySearchTree):
 
         # 2
         if inserted.color == RED and inserted.parent.color == BLACK:
+            print '2'
             return
 
         parent = inserted.parent
@@ -249,9 +278,11 @@ class RedBlackTree(BinarySearchTree):
 
         # 3
         if uncle is not None and uncle.color == RED:
+            print '3'
             parent.color = BLACK
             uncle.color = BLACK
             grand.color = RED
+            print self
             self.color(grand)
             return
 
@@ -274,7 +305,7 @@ class RedBlackTree(BinarySearchTree):
                 # switch color
                 grand.color = ColorNode.RED
                 inserted.color = ColorNode.BLACK
-                print '1'
+                print '4-1a'
             #                on the right branch
             elif grand.has_right_branch() and inserted is grand.right.left:
                 parent.rotate(BinaryNode.RRIGHT)
@@ -283,12 +314,15 @@ class RedBlackTree(BinarySearchTree):
                 # switch color
                 grand.color = ColorNode.RED
                 inserted.color = ColorNode.BLACK
-                print '2'
+                print '4-1b'
 
             # parent is promoted to above grand
             # or the node was inserted at the right or left most of the branch
             else:
-                print '3'
+                print '4-2'
+                print grand
+                print parent
+                print inserted
                 if parent is grand.left:
                     grand.rotate(BinaryNode.RRIGHT)
                 elif parent is grand.right:
@@ -349,11 +383,10 @@ class RedBlackTree(BinarySearchTree):
 
             h = int(node.color == ColorNode.BLACK) + mem[node.parent.value]
 
-            print 'Height', node.value, h, mem[node.parent.value], node.parent.value
+            # print node
+            # print 'Height', node.value, h, mem[node.parent.value], node.parent.value
 
             mem[node.value] = h
-
-            print mem
             return h
 
 
@@ -366,6 +399,7 @@ class RedBlackTree(BinarySearchTree):
         for i in range(1, len(leaves)):
             h = get_black_height(leaves[i], mem)
             if h != h0:
+                print [l.value for l in leaves]
                 print mem
                 raise ValueError('Height unbalanced at node {} ({}) wrt h0 {}'.format(leaves[i].value, h, h0))
 
@@ -462,7 +496,6 @@ def test_rotate_left():
 
     tree = RedBlackTree()
     tree.set_root(nodes[3])
-    print 'SPEcal', tree.count, tree.height
 
     nodes[1].rotate(BinaryNode.RLEFT)
 
@@ -528,8 +561,6 @@ def test_red_black_height():
     tree = RedBlackTree()
     for v in bug_values:
         tree.insert(v)
-        print '\n\nInserting', v
-        print tree
         tree.assert_equal_black_height()
 
     # for d in range(1, 15):
