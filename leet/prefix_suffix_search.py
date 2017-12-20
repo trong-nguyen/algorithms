@@ -84,7 +84,7 @@ class WordFilter(object):
         res = self.pair_trie.search(prefix, suffix)
         return res if res != None else -1
 
-from utils import fail_string
+from utils.templates import fail_string
 
 def test():
     words = ['apple']

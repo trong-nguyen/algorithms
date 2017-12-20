@@ -6,7 +6,7 @@
 """
 
 import sys
-from utils import fail_string
+from utils.templates import fail_string
 
 def test():
     for case, ans in [

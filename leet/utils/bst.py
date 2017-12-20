@@ -26,6 +26,12 @@ class BinaryNode(object):
             c.append(self.right)
         return c
 
+    def render(self):
+        """
+        Rendering content for ASCII visualization in a tree
+        """
+        return str(self.value)
+
     def rotate(self, direction):
         """
         root is the higher node (in height) and the parent of the pivot
@@ -130,6 +136,10 @@ class ColorNode(BinaryNode):
             l, '[{}|{}]'.format(self.value, self.color_str()), r)
         return output
 
+    def render(self):
+        r = super(ColorNode, self).render()
+        return '{}|{}'.format(r, self.color_str())
+
 
 class BinarySearchTree(object):
     """docstring for BinarySearchTree"""
@@ -221,105 +231,6 @@ class BinarySearchTree(object):
         return leaves
 
 
-
-
-    def __str__(self):
-        output = ''
-        heap = [self.root]
-        while heap:
-            output += str([i.value for i in heap]) + '\n'
-            next_heap = []
-            for node in heap:
-                next_heap += node.children()
-            next_heap = filter(bool, next_heap)
-            heap = next_heap
-
-        return output
-
-
-class RedBlackTree(BinarySearchTree):
-    """docstring for RedBlackTree"""
-    Node = ColorNode
-
-    def __init__(self):
-        super(RedBlackTree, self).__init__()
-
-    def insert(self, value):
-        precount = self.count
-        inserted = super(RedBlackTree, self).insert(value)
-        if self.count == precount: # not inserted
-            return inserted
-
-        inserted.color = ColorNode.RED
-        self.color(inserted)
-
-        return inserted
-
-    def color(self, target):
-        """
-        https://en.wikipedia.org/wiki/Red–black_tree
-        """
-        BLACK = ColorNode.BLACK
-        RED = ColorNode.RED
-
-        # 1
-        if target.parent is None:
-            target.color = BLACK
-            return
-
-        # 2
-        if target.color == RED and target.parent.color == BLACK:
-            return
-
-        parent = target.parent
-        grand = parent.parent
-        uncle = [grand.left, grand.right][parent is grand.left]
-
-        # 3
-        if uncle is not None and uncle.color == RED:
-            parent.color = BLACK
-            uncle.color = BLACK
-            grand.color = RED
-            self.color(grand)
-            return
-
-        # 4
-        else:
-            # step 1
-            # the node was target in-order in between his parent and his grand
-            # parent and him on the left branch of the grand
-
-            # target is promoted from the bottom to above grand
-            if grand.has_left_branch() and target is grand.left.right:
-                parent.rotate(BinaryNode.RLEFT)
-                grand.rotate(BinaryNode.RRIGHT)
-
-                # switch color
-                grand.color = ColorNode.RED
-                target.color = ColorNode.BLACK
-            #                on the right branch
-            elif grand.has_right_branch() and target is grand.right.left:
-                parent.rotate(BinaryNode.RRIGHT)
-                grand.rotate(BinaryNode.RLEFT)
-
-                # switch color
-                grand.color = ColorNode.RED
-                target.color = ColorNode.BLACK
-
-            # parent is promoted to above grand
-            # or the node was target at the right or left most of the branch
-            else:
-                if parent is grand.left:
-                    grand.rotate(BinaryNode.RRIGHT)
-                elif parent is grand.right:
-                    grand.rotate(BinaryNode.RLEFT)
-
-                parent.color = ColorNode.BLACK
-                grand.color = ColorNode.RED
-
-            # root can only be changed if rotations are involved
-            self.correct_root()
-
     def correct_root(self):
         if not self.root:
             return None
@@ -354,42 +265,6 @@ class RedBlackTree(BinarySearchTree):
             queue = next_queue
         return height, count
 
-    def assert_equal_black_height(self):
-        def get_black_height(node, mem):
-            if node.value in mem:
-                return mem[node.value]
-            if not node.parent:
-                mem[node.value] = 1
-                return 1
-
-            if node.parent.value not in mem:
-                get_black_height(node.parent, mem)
-
-            h = int(node.color == ColorNode.BLACK) + mem[node.parent.value]
-
-            # print node
-            # print 'Height', node.value, h, mem[node.parent.value], node.parent.value
-
-            mem[node.value] = h
-            return h
-
-
-        leaves = self.get_leaves()
-        if not leaves:
-            return True
-
-        mem = {}
-        h0 = get_black_height(leaves[0], mem)
-        for i in range(1, len(leaves)):
-            h = get_black_height(leaves[i], mem)
-            if h != h0:
-                print [l.value for l in leaves]
-                print mem
-                raise ValueError('Height unbalanced at node {} ({}) wrt h0 {}'.format(leaves[i].value, h, h0))
-
-        return True
-
-
     def clone(self, spaces):
         """
         create a cloned tree with space delimiters
@@ -397,9 +272,7 @@ class RedBlackTree(BinarySearchTree):
         def make_clone_node(idx, original_node):
             return BinaryNode({
                 'idx': idx,
-                'val': '' if not original_node else '{}:{}'.format(
-                    original_node.value, original_node.color_str()
-                    )
+                'val': '' if not original_node else original_node.render()
             })
 
         n = spaces
@@ -468,7 +341,133 @@ class RedBlackTree(BinarySearchTree):
             output.append(''.join(row))
             heap = filter(bool, next_heap)
 
-        return '\nRED-BLACK tree visualization:\n' + '\n'.join(output)
+        return '\n{} in ASCII:\n {}'.format(
+            self.__class__.__name__,
+            '\n'.join(output),
+        )
+
+
+class RedBlackTree(BinarySearchTree):
+    """docstring for RedBlackTree"""
+    Node = ColorNode
+
+    def __init__(self):
+        super(RedBlackTree, self).__init__()
+
+    def insert(self, value):
+        precount = self.count
+        inserted = super(RedBlackTree, self).insert(value)
+        if self.count == precount: # not inserted
+            return inserted
+
+        self.color(inserted)
+
+        return inserted
+
+    def color(self, target):
+        """
+        https://en.wikipedia.org/wiki/Red–black_tree
+        """
+        BLACK = ColorNode.BLACK
+        RED = ColorNode.RED
+
+        # either target is the new inserted node
+        # or the grand node of the inserted (recused in step 3)
+        # either way, it should be RED
+        target.color = RED
+
+        # 1
+        if target.parent is None:
+            target.color = BLACK
+            return
+
+        # 2
+        if target.color == RED and target.parent.color == BLACK:
+            return
+
+        parent = target.parent
+        grand = parent.parent
+        uncle = [grand.left, grand.right][parent is grand.left]
+
+        # 3
+        if uncle is not None and uncle.color == RED:
+            parent.color = BLACK
+            uncle.color = BLACK
+            # grand.color = RED
+            self.color(grand)
+            return
+
+        # 4
+        else:
+            # step 1
+            # the node was target in-order in between his parent and his grand
+            # parent and him on the left branch of the grand
+
+            # target is promoted from the bottom to above grand
+            if grand.has_left_branch() and target is grand.left.right:
+                parent.rotate(BinaryNode.RLEFT)
+                grand.rotate(BinaryNode.RRIGHT)
+
+                # switch color
+                grand.color = ColorNode.RED
+                target.color = ColorNode.BLACK
+            #                on the right branch
+            elif grand.has_right_branch() and target is grand.right.left:
+                parent.rotate(BinaryNode.RRIGHT)
+                grand.rotate(BinaryNode.RLEFT)
+
+                # switch color
+                grand.color = ColorNode.RED
+                target.color = ColorNode.BLACK
+
+            # parent is promoted to above grand
+            # or the node was target at the right or left most of the branch
+            else:
+                if parent is grand.left:
+                    grand.rotate(BinaryNode.RRIGHT)
+                elif parent is grand.right:
+                    grand.rotate(BinaryNode.RLEFT)
+
+                parent.color = ColorNode.BLACK
+                grand.color = ColorNode.RED
+
+            # root can only be changed if rotations are involved
+            self.correct_root()
+
+    def assert_equal_black_height(self):
+        def get_black_height(node, mem):
+            if node.value in mem:
+                return mem[node.value]
+            if not node.parent:
+                mem[node.value] = 1
+                return 1
+
+            if node.parent.value not in mem:
+                get_black_height(node.parent, mem)
+
+            h = int(node.color == ColorNode.BLACK) + mem[node.parent.value]
+
+            # print node
+            # print 'Height', node.value, h, mem[node.parent.value], node.parent.value
+
+            mem[node.value] = h
+            return h
+
+
+        leaves = self.get_leaves()
+        if not leaves:
+            return True
+
+        mem = {}
+        h0 = get_black_height(leaves[0], mem)
+        for i in range(1, len(leaves)):
+            h = get_black_height(leaves[i], mem)
+            if h != h0:
+                print [l.value for l in leaves]
+                print mem
+                raise ValueError('Height unbalanced at node {} ({}) wrt h0 {}'.format(leaves[i].value, h, h0))
+
+        return True
 
 import random
 
@@ -516,12 +515,14 @@ def test_rotate_right():
 
 def test_binary_tree():
     print 'Test binary tree ...'
+    n = 10
     tree = BinarySearchTree()
-
-    n = 100
     for i in range(n-1, -1, -1):
         tree.insert(i)
-
+    print tree
+    tree = BinarySearchTree()
+    for i in range(n):
+        tree.insert(i)
     print tree
 
     for i in range(n):
@@ -533,7 +534,7 @@ def test_binary_tree():
     assert tree.find(n) is None
 
 def test_red_black_tree():
-    print 'Testing tree sizes for intentionally biased values ...'
+    print 'Testing RB tree sizes for intentionally biased values ...'
     n = 2**8
     left_tree = RedBlackTree()
     for i in range(n):

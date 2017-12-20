@@ -117,7 +117,7 @@ class Solution(object):
         """
         return password_check(s)
 
-from utils import fail_string
+from utils.templates import fail_string
 
 def test():
     solution = Solution()
