@@ -37,7 +37,7 @@ Every string in deadends and the string target will be a string of 4 digits from
 
 Solution:
     This is a shortest path graph problem
-    We could apply breadth-first search with neighbors of a certain combination being the the combination with one of
+    We could apply breadth-first search with neighbors of a certain combination being the combination with one of
     its slot increased or reduced by 1
 
     ie: neighbors of 1352 are [[0]352, [2]352, 1[2]52, 1[4]52, 13[4]2, 13[6]2, 135[1], 135[3]]

@@ -15,24 +15,19 @@ from utils.templates import fail_string
 
 def twice(nums):
     idx, largest = 0, nums[0]
-    for i, v in enumerate(nums[1:]):
+    for i in range(1, len(nums)):
+        v = nums[i]
         if v > largest:
-            if v < 2 * largest:
-                idx = -1
-            else:
-                idx = i + 1
-
+            idx = i if v >= 2 * largest else -1
             largest = v
-        elif largest < 2*v:
+        elif largest < 2 * v:
             idx = -1
-
-        print idx, v, largest
     return idx
 
 def test():
     for case, ans in [
-        # ([[3, 6, 1, 0]], 1),
-        # ([[1, 2, 3, 4]], -1),
+        ([[3, 6, 1, 0]], 1),
+        ([[1, 2, 3, 4]], -1),
         ([[0,0,3,2]], -1),
     ]:
         res = twice(*case)
