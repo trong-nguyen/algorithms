@@ -209,7 +209,7 @@ def test():
         nums = case[0]
         print 'Original {}, set {}'.format(len(nums), len(set(nums)))
         res = reverse_pairs(nums)
-        if ans == True: # if skip
+        if ans is True: # if skip
             continue
         else:
             try:
