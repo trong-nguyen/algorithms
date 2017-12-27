@@ -40,18 +40,19 @@ def walk_down(matrix):
     j = 0
     path = [(i, j)]
     while (i < n or j < n):
+        if i == j == n - 1:
+            break
+
         if i == n - 1:
             j += 1
         elif j == n - 1:
             i += 1
-        elif matrix[i, j+1] >= matrix[i+1, j]:
+        elif matrix[i][j+1] >= matrix[i+1][j]:
             j += 1
         else:
             i += 1
 
         path.append((i, j))
-        if i == j == n - 1:
-            break
 
     return path
 
@@ -61,78 +62,91 @@ def walk_down(matrix):
 def build_potential_matrix(matrix):
     n = len(matrix)
 
-    potential = np.matrix([np.zeros(n, dtype=int)] * n)
+    potential = [[0] * n for i in range(n)]
     # bcs
-    potential[n-1, n-1] = matrix[n-1, n-1]
-    potential[:, n-1] = matrix[:, n-1]
+    potential[n-1][n-1] = matrix[n-1][n-1]
+    # print 'Bc\n', matrix_str(potential)
     for i in range(n-2, -1, -1):
-        f = matrix[i, n-1]
+        f = matrix[i][n-1]
         if f >= 0:
-            potential[i, n-1] = potential[i+1, n-1] + matrix[i, n-1]
+            potential[i][n-1] = potential[i+1][n-1] + matrix[i][n-1]
         else:
-            potential[i, n-1] = -1
+            potential[i][n-1] = -1
 
     for i in range(n-2, -1, -1):
-        f = matrix[n-1, i]
+        f = matrix[n-1][i]
         if f >= 0:
-            potential[n-1, i] = potential[n-1, i+1] + matrix[n-1, i]
+            potential[n-1][i] = potential[n-1][i+1] + matrix[n-1][i]
         else:
-            potential[n-1, i] = -1
+            potential[n-1][i] = -1
 
+    # print 'Bc\n', matrix_str(potential)
     # inner loop
     for k in range(n-2, -1, -1):
         for i in range(k, -1, -1):
-            f = matrix[i, k]
+            f = matrix[i][k]
             if f == -1:
-                potential[i, k] = -1
+                potential[i][k] = -1
             else:
-                fr = potential[i, k+1]
-                fd = potential[i+1, k]
+                fr = potential[i][k+1]
+                fd = potential[i+1][k]
                 fnb = max(fr, fd)
+                potential[i][k] = (f + fnb) if fnb != -1 else -1
 
-                potential[i, k] = f + max(fr, fd)
 
         for i in range(k, -1, -1):
-            f = matrix[k, i]
+            f = matrix[k][i]
             if f == -1:
-                potential[k, i] = -1
+                potential[k][i] = -1
             else:
-                fr = potential[k, i+1]
-                fd = potential[k+1, i]
-                potential[k, i] = f + max(fr, fd)
+                fr = potential[k][i+1]
+                fd = potential[k+1][i]
+                fnb = max(fr, fd)
+                potential[k][i] = (f + fnb) if fnb != -1 else -1
 
     return potential
 
 def update_matrix(matrix, path):
     for i, j in path:
-        matrix[i, j] = 0
+        matrix[i][j] = 0
 
 def count_picked(matrix, path):
     cherries = 0
     for i, j in path:
-        cherries += matrix[i, j]
+        cherries += matrix[i][j]
     return cherries
 
-def pick_cherry(field):
-    #print field
-    field = np.matrix(field)
-    p = build_potential_matrix(field)
-    #print p
+def matrix_str(mat):
+    return '\n'.join([' '.join(map('{:3}'.format, row)) for row in mat])
 
-    if p[0, 0] == -1:
+def cherry_field_str(field):
+    def cherry_cell(cell):
+        s = 'c' if cell == 1 else ['*', ''][cell==0]
+        return '{:>3}'.format(s)
+    return '\n'.join([' '.join(map(cherry_cell, row)) for row in field])
+
+def pick_cherry(field):
+    print 'Field\n', cherry_field_str(field)
+    field = [list(row) for row in field]
+    p = build_potential_matrix(field)
+    print 'Potential\n', matrix_str(p)
+
+    if p[0][0] in [-1, 0]:
         return 0
 
     path_1 = walk_down(p)
     cherries_down = count_picked(field, path_1)
 
     update_matrix(field, path_1)
+    print 'Field 2\n', cherry_field_str(field)
     p = build_potential_matrix(field)
+    print 'Potential 2\n', matrix_str(p)
     path_2 = walk_down(p)
     cherries_up = count_picked(field, path_2)
 
-    #print path_1
-    #print path_2
-    #print cherries_down + cherries_up
+    print path_1
+    print path_2
+    print cherries_down + cherries_up
     return cherries_down + cherries_up
 
 import sys
@@ -140,6 +154,12 @@ from utils.templates import fail_string
 import random
 def test():
     for case, ans in [
+        ([[1,1,1,1,0,0,0],[0,0,0,1,0,0,0],[0,0,0,1,0,0,1],[1,0,0,1,0,0,0],[0,0,0,1,0,0,0],[0,0,0,1,0,0,0],[0,0,0,1,1,1,1]], 15),
+        ([[0, 0], [0, 0]], 0),
+        ([[0]], 0),
+        ([[1,1,-1],[1,-1,1],[-1,1,1]], 0),
+
+
         ([[0, 1, -1],
          [1, 0, -1],
          [1, 1,  1]], 5),
@@ -153,14 +173,14 @@ def test():
          [1, 0, 1],
          [1, 1, 0]], 7),
 
-        ([[random.randint(-1, 1) for i in range(1000)] for j in range(1000)], 100),
+        # ([[random.randint(-1, 1) for i in range(100)] for j in range(100)], 100),
     ]:
         res = pick_cherry(case)
-        # try:
-        #     assert res == ans
-        # except AssertionError as e:
-        #     status = fail_string(res=res, ans=ans, case=case)
-        #     sys.exit(status)
+        try:
+            assert res == ans
+        except AssertionError as e:
+            status = fail_string(res=res, ans=ans, case=case)
+            sys.exit(status)
 
 if __name__ == '__main__':
     test()
