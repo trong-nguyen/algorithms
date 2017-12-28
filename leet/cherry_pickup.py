@@ -56,6 +56,43 @@ def walk_down(matrix):
 
     return path
 
+def build_dual_possibility_matrix(matrix):
+    n = len(matrix)
+
+    possibilities = {(n-1, n-1): matrix[n-1][n-1]}
+    for k in range(n-2, -1, -1):
+        new_possibilities = {}
+        for r1 in range(k, n):
+            c1 = k - r1
+            for r2 in range(r1, n):
+                c2 = k - r2
+
+                if matrix[r1][c1] == -1 or matrix[r2][c2] == -1:
+                    new_possibilities[(r1, r2)] = -1
+                    continue
+
+                f = matrix[r1][c1]
+
+                if r1 != r2:
+                    f += matrix[r2][c2]
+
+                fnb = max([
+                    possibilities[(r1, r2)],
+                    possibilities[(r1, r2+1)],
+                    possibilities[(r1+1, r2)],
+                    possibilities[(r1+1, r2+1)],
+                    ])
+
+                if fnb == -1:
+                    new_possibilities[(r1, r2)] = -1
+
+                new_possibilities[(r1, r2)] = f + fnb
+
+        possibilities = new_possibilities
+
+    return possibilities[(0, 0)]
+
+
 
 
 
