@@ -29,6 +29,45 @@ Note:
 grid is an N by N 2D array, with 1 <= N <= 50.
 Each grid[i][j] is an integer in the set {-1, 0, 1}.
 It is guaranteed that grid[0][0] and grid[N-1][N-1] are not -1.
+
+SOLUTION:
+    This problem is a genius modification of the original problem where greedy approach will work.
+    Though the solution to the original problem does not solve this problem correctly. Understanding it
+    will help devise a solution to this problem.
+    - Original problem: single thread (one picker at a time, one pass, etc.).
+        At a certain time, one picker can only proceed right or down. Hence the DP form will be:
+            DP[i,j] = F[i,j] + max(DP[i+1,j], DP[i, j+1])
+            Proceed bottom up, the boundary condition will be the right and bottom edges.
+            Solution is at DP[0, 0].
+    - This problem: dual thread (2 pickers, or 2 passes, up and down).
+        Now, at a certain time, we have 2 workers being somewhere on the diagonal line i+j = k
+        where k ranges from 0 to 2n-2. The DP form will be:
+            Basically that means for each row on the diagonal line i+j=k. Pick 2 points (n2 choices).
+            (i1, j1), (i2, j2). The most cherries that these 2 workers can pick will be:
+                * the cherries at those points F[i1, j1] + F[i2, j2] (minus 1 if i1=j1, i2=j2)
+                * plus the most cherries 2 can pick in one of the scenarios:
+                    + 1st worker moves right, 2nd moves right
+                    + 1st worker moves right, 2nd moves down
+                    + 1st worker moves down, 2nd moves right
+                    + 1st worker moves down, 2nd moves down
+
+            Programmatically:
+            DP[(i1,j1), (i2,j2)] = Non-overlapped(F[i1,j1] + F[i2,j2]) + max(
+                DP[(i1,j1+1), (i2+1,j2)],
+                DP[(i1,j1+1), (i2,j2+1)],
+                DP[(i1+1,j1), (i2+1,j2)],
+                DP[(i1+1,j1), (i2,j2+1)],
+            )
+            Since for each diagonal levels the constraint i+j = k holds we can simplify the formula further:
+            DP[i1,i2] = Non-overlapped(F[i1,j1] + F[i2,j2]) + max(
+                DP'[i1,i2],
+                DP'[i1,i2+1],
+                DP'[i1+1,i2],
+                DP'[i1+1,i2+1],
+            )
+            where DP' is the obtained solution at level k+1 (solved)
+
+            O(n3) time, O(n2) space
 """
 
 import numpy as np
@@ -60,13 +99,22 @@ def build_dual_possibility_matrix(matrix):
     n = len(matrix)
 
     possibilities = {(n-1, n-1): matrix[n-1][n-1]}
-    for k in range(n-2, -1, -1):
+    # dual = [possibilities]
+    # k ranges from 0 to 2n-2 (total 2n-1 levels)
+    # hence the second last level is 2n-3
+    for k in range(2*n-3, -1, -1):
         new_possibilities = {}
-        for r1 in range(k, n):
-            c1 = k - r1
-            for r2 in range(r1, n):
-                c2 = k - r2
+        if k >= n:
+            # bottom right triangle
+            rows = (k-n+1, n)
+            cols = (n-1, k-n, -1)
+        else:
+            # upper left triangle
+            rows = (0, k+1)
+            cols = (k, -1, -1)
 
+        for r1, c1 in zip(range(*rows), range(*cols)):
+            for r2, c2 in zip(range(r1, rows[-1]), range(c1, cols[-1], -1)):
                 if matrix[r1][c1] == -1 or matrix[r2][c2] == -1:
                     new_possibilities[(r1, r2)] = -1
                     continue
@@ -76,24 +124,27 @@ def build_dual_possibility_matrix(matrix):
                 if r1 != r2:
                     f += matrix[r2][c2]
 
-                fnb = max([
-                    possibilities[(r1, r2)],
-                    possibilities[(r1, r2+1)],
-                    possibilities[(r1+1, r2)],
-                    possibilities[(r1+1, r2+1)],
-                    ])
+                fnb = -1
+
+                for move in [
+                    (r1, r2),
+                    (r1, r2+1),
+                    (r1+1, r2),
+                    (r1+1, r2+1),
+                ]:
+                    # this will take care of edge cases
+                    if move in possibilities:
+                        fnb = max(fnb, possibilities[move])
 
                 if fnb == -1:
+                    # stuck no matter what
                     new_possibilities[(r1, r2)] = -1
-
-                new_possibilities[(r1, r2)] = f + fnb
+                else:
+                    new_possibilities[(r1, r2)] = f + fnb
 
         possibilities = new_possibilities
 
     return possibilities[(0, 0)]
-
-
-
 
 
 def build_potential_matrix(matrix):
@@ -163,6 +214,7 @@ def cherry_field_str(field):
     return '\n'.join([' '.join(map(cherry_cell, row)) for row in field])
 
 def pick_cherry(field):
+    # greedy approach, is correct for some cases
     print 'Field\n', cherry_field_str(field)
     field = [list(row) for row in field]
     p = build_potential_matrix(field)
@@ -185,6 +237,13 @@ def pick_cherry(field):
     print path_2
     print cherries_down + cherries_up
     return cherries_down + cherries_up
+
+def pick_2_cherries(field):
+    # print 'Field\n', cherry_field_str(field)
+    # field = [list(row) for row in field]
+    cherries = build_dual_possibility_matrix(field)
+    return 0 if cherries == -1 else cherries
+
 
 import sys
 from utils.templates import fail_string
@@ -212,7 +271,8 @@ def test():
 
         # ([[random.randint(-1, 1) for i in range(100)] for j in range(100)], 100),
     ]:
-        res = pick_cherry(case)
+        # res = pick_cherry(case) # single thread, wrong results
+        res = pick_2_cherries(case) # dual thread, dual possibilities
         try:
             assert res == ans
         except AssertionError as e:
