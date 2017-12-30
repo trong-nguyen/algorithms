@@ -27,38 +27,63 @@ def mid(idx):
 def median(nums, idx):
     return nums[mid(idx)]
 
-def recurse(nums1, idx1, nums2, idx2):
+def recurse(nums1, idx1, nums2, idx2, counts):
     def is_single(idx):
         return idx[1] - idx[0] == 1
 
+    def is_empty(idx):
+        return idx[0] >= idx[1]
+
+    def odd(idx):
+        return not even(idx)
+
+    def even(idx):
+        return (idx[1] - idx[0]) % 2 == 0
+
     def first_half(idx):
         # first half range
-        if is_single(idx):
-            return idx
         return idx[0], mid(idx)
 
     def second_half(idx):
         # second half range
-        if is_single(idx):
-            return idx
         return mid(idx), idx[1]
 
-    print 'Recursing on', nums1[idx1[0]:idx1[1]], nums2[idx2[0]:idx2[1]]
-    print 'Median 1', median(nums1, idx1)
-    print 'Median 2', median(nums2, idx2)
+    def length(idx):
+        return idx[1] - idx[0]
 
+    print 'Recursing on', nums1[idx1[0]:idx1[1]], nums2[idx2[0]:idx2[1]]
+    # print 'Median 1', median(nums1, idx1)
+    # print 'Median 2', median(nums2, idx2)
+
+    lc, rc = counts
+    print '\tCounts', counts
     if is_single(idx1) and is_single(idx2):
         return nums1[idx1[1]-1], nums2[idx2[1]-1]
+    elif is_empty(idx1):
+        # delta = RC - LC, idx2[0] - delta
+        m = mid(idx2)
+        if odd(idx2):
+            return nums2[m], nums2[m]
+        else:
+            return nums2[m-1], nums2[m]
+    elif is_empty(idx2):
+        m = mid(idx1)
+        if odd(idx1):
+            return nums1[m], nums1[m]
+        else:
+            return nums1[m-1], nums1[m]
 
     if median(nums1, idx1) <= median(nums2, idx2):
-        return recurse(nums2, first_half(idx2), nums1, second_half(idx1))
+        counts = (length(first_half(idx1)) + lc, length(second_half(idx2)) + rc)
+        return recurse(nums2, first_half(idx2), nums1, second_half(idx1), counts)
     else:
-        return recurse(nums1, first_half(idx1), nums2, second_half(idx2))
+        counts = (length(first_half(idx2)) + lc, length(second_half(idx1)) + rc)
+        return recurse(nums1, first_half(idx1), nums2, second_half(idx2), counts)
 
 def median_of_2(nums1, nums2):
     m = len(nums1)
     n = len(nums2)
-    x, y = recurse(nums1, (0, m), nums2, (0, n))
+    x, y = recurse(nums1, (0, m), nums2, (0, n), (0, 0))
 
     print 'median_indices', x, y
 
@@ -80,6 +105,11 @@ def test():
     for case, ans in [
         ([[1, 3], [2]], 2),
         ([[1, 2], [3, 4]], 2.5),
+        ([[4,6,8,10,12], [9]], 8.5),
+        ([[4,6,8,10,12], [13]], 9),
+        ([[4,6,8,10,12], [5,7,9,11,13]], 8.5),
+        ([[4,6,8], [5,7,9]], 6.5),
+        ([[4,6,8,10], [5,7,9]], 7),
     ]:
         res = median_of_2(*case)
         try:
