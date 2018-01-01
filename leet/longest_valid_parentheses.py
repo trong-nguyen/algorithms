@@ -13,11 +13,43 @@ import sys
 from utils.templates import fail_string
 
 def longest_parentheses(s):
-    return 2
+    def _longest_parentheses(s, opener):
+        max_count = 0
+        count = 0
+        bucket = 0
+        for c in s:
+            if c == opener:
+                bucket += 1
+            elif bucket > 0:
+                bucket -= 1
+                count += 1
+                max_count = max(max_count, count)
+            else:
+                count = 0
+            print bucket, count
+        return max_count * 2
+
+    print _longest_parentheses(s, '('), _longest_parentheses(s[::-1], ')')
+    return min(_longest_parentheses(s, '('), _longest_parentheses(s[::-1], ')'))
+
+
+class Solution(object):
+    def longestValidParentheses(self, s):
+        """
+        :type s: str
+        :rtype: int
+        """
+        return longest_parentheses(s)
+
+
 
 def test():
     for case, ans in [
-        ([')()())'], 4)
+        (['(()'], 1),
+        (["))))())()()(()"], 4),
+        # (["()(()"], 2),
+        # (["(()"], 2),
+        # ([')()())'], 4),
     ]:
         res = longest_parentheses(*case)
         try:
