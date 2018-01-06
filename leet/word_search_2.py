@@ -39,35 +39,38 @@ def word_search(board, words):
     def get_trie_nb(branch):
         return filter(lambda nb: nb != '*', branch.keys())
 
-    def get_board_nb(coord, ):
+    def get_board_nb(coord, b):
+        m, n = len(b), len(b[0])
+        i, j = coord
+
+        def bounded(c):
+            return 0 <= c[0] <= m-1 and 0 <= c[1] <= n-1
+        return filter(bounded, [(i, j-1), (i, j+1), (i-1, j), (i+1, j)])
 
 
+    def walk_parallel(trie, b, br, b_visited, path, results):
+        if EOW in t[t_node]:
+            results.append(' '.join(path))
 
-    def walk_parallel(t, tr, b, br):
-        t_stack = [tr]
-        b_stack = [br]
+        keys = trie.keys()
+        if len(keys) == 1 and keys == [EOW]:
+            return True
 
-        t_visited = set()
-        b_visited = set()
+        b_nb = get_board_nb(br, b)
+        b_nb = filter(lambda x: x not in b_visited, b_nb)
 
-        results = []
-        b_path = []
-        while t_stack and b_stack:
-            t_node = t_stack.pop()
-            b_node = b_stack.pop()
+        fully_matched = True
+        for nb in b_nb:
+            t = board[i][j]
+            if t in trie:
+                bv = b_visited.union(nb)
+                matched = walk_parallel(trie[t], b, nb, bv, path + [tb], results)
+                if matched:
+                    del trie[t]
+                else:
+                    fully_matched = False
 
-            t_visited.add(t_node)
-            b_visited.add(b_node)
-
-            i, j = b_node
-            b_path.append(b_node)
-
-            if EOW in t[t_node]:
-                results.append(' '.join(path))
-
-
-
-
+        return fully_matched
 
     board_roots = {}
     for i, row in enumerate(board):
