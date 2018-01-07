@@ -49,28 +49,31 @@ def word_search(board, words):
 
 
     def walk_parallel(trie, b, br, b_visited, path, results):
-        if EOW in t[t_node]:
-            results.append(' '.join(path))
-
-        keys = trie.keys()
-        if len(keys) == 1 and keys == [EOW]:
-            return True
+        if not trie:
+            return True, results
 
         b_nb = get_board_nb(br, b)
         b_nb = filter(lambda x: x not in b_visited, b_nb)
+        # print '\t', b_nb
 
-        fully_matched = True
         for nb in b_nb:
+            i, j = nb
             t = board[i][j]
             if t in trie:
                 bv = b_visited.union(nb)
-                matched = walk_parallel(trie[t], b, nb, bv, path + [tb], results)
+                matched, results = walk_parallel(trie[t], b, nb, bv, path + [t], results)
+                if EOW in trie:
+                    results += [''.join(path + [t])]
+
                 if matched:
                     del trie[t]
-                else:
-                    fully_matched = False
 
-        return fully_matched
+        # the match is complete (all branches matched)
+        # if sub trees is empty
+        if EOW in trie:
+            return len(trie) == 1, results
+        else:
+            return not trie, results
 
     board_roots = {}
     for i, row in enumerate(board):
@@ -79,19 +82,26 @@ def word_search(board, words):
 
     trie = build_trie(words)
 
-    matched = []
+    found_words = []
 
-    for trie_root in trie:
-        if trie_root in board_roots:
-            for board_root in board_roots:
-                ws = walk_parallel(trie, trie_root, board, board_root)
-                matched += ws
+    trie_roots = trie.keys()
+    for trie_root in trie_roots:
+        char = trie_root
+        if char in board_roots:
+            if not trie[trie_root]: # single word
+                found_words.append(char)
+            else:
+                for board_root in board_roots[char]:
+                    matched, ws = walk_parallel(trie[trie_root], board, board_root, set([board_root]), [trie_root], [])
+                    found_words += ws
+                    if matched:
+                        # abort other possible entry points if one matched
+                        del trie[trie_root]
+                        break
 
-    return set(matched)
+                    # print trie
 
-    print trie
-    print char_indices
-    return []
+    return list(set(found_words))
 
 
 class Solution(object):
@@ -103,6 +113,9 @@ class Solution(object):
         """
         return word_search(board, words)
 
+def matrix_str(mat):
+    return '\n'.join([' '.join(map('{:3}'.format, row)) for row in mat])
+
 
 import sys
 from utils.templates import fail_string
@@ -112,13 +125,53 @@ def test():
     solution = Solution()
 
     for case, ans in [
+        ([[["a","a"]], ["aaa"]], []),
+
+        ([["a"], ["a"]], ["a"]),
+
         ([[
           ['o','a','a','n'],
           ['e','t','a','e'],
           ['i','h','k','r'],
           ['i','f','l','v']
-        ], ["oath","pea","eat","rain"]], ["eat","oath"]),
+        ], ["aaa","a","aa", "aaakl"]], ['aa', 'aaakl', 'aaa']),
+
+        ([[
+          ['o','a','a','n'],
+          ['e','t','a','e'],
+          ['i','h','k','r'],
+          ['i','f','l','v']
+        ], ["aaa","a","aa","aaaao", "aaaaoe"]], ['aa', 'aaa']),
+
+        ([[
+          ['o','a','a','n'],
+          ['e','t','a','e'],
+          ['i','h','k','r'],
+          ['i','f','l','v']
+        ], ["aaa","aat","ahk","erv", "eee", "eakl"]], ['aat', 'erv', 'eakl', 'aaa']),
+
+        ([[
+          ['o','a','a','n'],
+          ['e','t','a','e'],
+          ['i','h','k','r'],
+          ['i','f','l','v']
+        ], ["oaan","oaaa","oateihkaa","vlkr", "vrkl"]], ['vrkl', 'oaaa', 'oaan', 'oateihkaa', 'vlkr']),
+
+        ([[
+          ['o','a','a','n'],
+          ['e','t','a','e'],
+          ['i','h','k','r'],
+          ['i','f','l','v']
+        ], ["oath","pea","eat","rain"]], ['oath', 'eat']),
+
+        ([[
+          ['o','a','a','n'],
+          ['e','t','a','e'],
+          ['i','h','k','r'],
+          ['i','f','l','v']
+        ], ["oath","oate","teoa","rain", "if", "oei", "oaanervlfiie"]], ['oaanervlfiie', 'teoa', 'oate', 'oei', 'oath', 'if']),
     ]:
+        print matrix_str(case[0])
         res = solution.findWords(*case)
         try:
             assert res == ans
