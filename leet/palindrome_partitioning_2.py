@@ -20,17 +20,22 @@ def find_all_palindromes(s):
 
     kmax = len(s)
 
-    palindromes = set()
+    palindromes = {}
     for k in range(PCUTOFF, kmax + 1): # to capture kmax
         for i in range(kmax - k + 1): # similarly
             j = i + k
             if s[i] != s[j-1]:
                 continue
 
+            yes = False
             if k < PCUTOFF + 2 and _is_palindrome(s, i+1, j-1):
-                palindromes.add((i, j))
-            elif (i+1, j-1) in palindromes:
-                palindromes.add((i, j))
+                yes = True
+            elif i+1 in palindromes and j-1 in palindromes[i+1]:
+                yes = True
+
+            if yes:
+                palindromes[i] = palindromes.get(i, set())
+                palindromes[i].add(j)
 
     return palindromes
 
@@ -49,7 +54,7 @@ def is_palindrome(s, i, j, lookup):
     if j - i < PCUTOFF:
         return _is_palindrome(s, i, j)
     else:
-        return (i, j) in lookup
+        return i in lookup and j in lookup[i]
 
 def cut(s, i, j, palindromes, mem):
     if j < i + 2:
@@ -61,7 +66,10 @@ def cut(s, i, j, palindromes, mem):
     else:
         cost = j - i - 1
         for k in range(i+1, j):
-            cost = min(cost, 1 + cut(s, i, k, palindromes, mem) + cut(s, k, j, palindromes, mem))
+            if is_palindrome(s, i, k, palindromes):
+                cost = min(cost, cut(s, k, j, palindromes, mem) + 1)
+
+
 
     mem[(i, j)] = cost
 
@@ -72,7 +80,9 @@ def min_cut(s):
     mem = {}
 
     # print [s[i:j] for i, j in palindromes]
-
+    # return 1
+    # print palindromes
+    # ps =
     return cut(s, 0, len(s), palindromes, mem)
 
 class Solution(object):
@@ -89,10 +99,11 @@ from utils.templates import fail_string
 
 def test():
     for case, ans in [
+        (["apjesgpsxoeiokmqmfgvjslcjukbqxpsobyhjpbgdfruqdkeiszrlmtwgfxyfostpqczidfljwfbbrflkgdvtytbgqalguewnhvvmcgxboycffopmtmhtfizxkmeftcucxpobxmelmjtuzigsxnncxpaibgpuijwhankxbplpyejxmrrjgeoevqozwdtgospohznkoyzocjlracchjqnggbfeebmuvbicbvmpuleywrpzwsihivnrwtxcukwplgtobhgxukwrdlszfaiqxwjvrgxnsveedxseeyeykarqnjrtlaliyudpacctzizcftjlunlgnfwcqqxcqikocqffsjyurzwysfjmswvhbrmshjuzsgpwyubtfbnwajuvrfhlccvfwhxfqthkcwhatktymgxostjlztwdxritygbrbibdgkezvzajizxasjnrcjwzdfvdnwwqeyumkamhzoqhnqjfzwzbixclcxqrtniznemxeahfozp"], 452),
+        (["aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabbaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"], 1),
         (['ab'], 1),
         ([''], 0),
         (['aab'], 1),
-        (["apjesgpsxoeiokmqmfgvjslcjukbqxpsobyhjpbgdfruqdkeiszrlmtwgfxyfostpqczidfljwfbbrflkgdvtytbgqalguewnhvvmcgxboycffopmtmhtfizxkmeftcucxpobxmelmjtuzigsxnncxpaibgpuijwhankxbplpyejxmrrjgeoevqozwdtgospohznkoyzocjlracchjqnggbfeebmuvbicbvmpuleywrpzwsihivnrwtxcukwplgtobhgxukwrdlszfaiqxwjvrgxnsveedxseeyeykarqnjrtlaliyudpacctzizcftjlunlgnfwcqqxcqikocqffsjyurzwysfjmswvhbrmshjuzsgpwyubtfbnwajuvrfhlccvfwhxfqthkcwhatktymgxostjlztwdxritygbrbibdgkezvzajizxasjnrcjwzdfvdnwwqeyumkamhzoqhnqjfzwzbixclcxqrtniznemxeahfozp"], 28),
         (['abcdeffedcbaabcdeffedcbbabcdeffedcbaabcdeffedcbeabcdeffedcbaabcdeffedcbbabcdeffedcbaabcdeffedcbeabcdeffedcbaabcdeffedcbbabcdeffedcbaabcdeffedcbe'], 17),
         (['abcdeffedcbaabcdeffedcbbabcdeffedcbaabcdeffedcbe'], 5),
         (['abcdeffedcbaabcdeffedcbb'], 2),
