@@ -9,7 +9,22 @@ Return the minimum cuts needed for a palindrome partitioning of s.
 For example, given s = "aab",
 Return 1 since the palindrome partitioning ["aa","b"] could be produced using 1 cut.
 
+SOLUTION:
+    2 steps:
+    - Find all palindromes (i, j) in string s: s[i:j] is a palindrome
+        + if s[i] == s[j] then s[i:j] is a palindrome if s[i+1:j-1] is also a palindrome
 
+    - Given all palindrome (defined by sequen i, j) known
+        + min cut of sub string s[m:n] is:
+            - the min of these costs:
+            - taking combination of all possible palindromes starting from m, says to k s[m:k] is palindrome
+            - min {1 + cost(s[k:n])}
+            which literally means turning the problem into a subproblem s[k:n]
+            which is obtained from the original problem bar the palindrom s[m:k]
+
+            - the rationale is the optimal solution must make use of some or all of the available palindromes
+            - So we successively take one of the palindromes (sized 1 is also a palindrom) and solve the
+            subproblem by subtracting that palindrome from the string.
 """
 PCUTOFF = 5
 
@@ -79,10 +94,6 @@ def min_cut(s):
     palindromes = find_all_palindromes(s)
     mem = {}
 
-    # print [s[i:j] for i, j in palindromes]
-    # return 1
-    # print palindromes
-    # ps =
     return cut(s, 0, len(s), palindromes, mem)
 
 class Solution(object):
