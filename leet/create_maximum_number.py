@@ -22,47 +22,119 @@ nums2 = [8, 9]
 k = 3
 return [9, 8, 9]
 """
-def create_number(nums1, nums2, i, j, k, mem):
+import heapq
+
+def merge(nums1, nums2, i, j):
+    res = []
     m, n = len(nums1), len(nums2)
-    if m - i + n - j == k:
-        res = []
-        u, v = i, j
-        for ki in range(k):
-            if nums1[u] >= nums2[v]:
-                res.insert(0, nums1[u])
-                u += 1
+    while i < m or j < n:
+        if i == m:
+            res += nums2[j:]
+            break
+        elif j == n:
+            res += nums1[i:]
+            break
+        elif nums1[i] >= nums2[j]:
+            res.append(nums1[i])
+            i += 1
+        else:
+            res.append(nums2[j])
+            j += 1
+
+    return res
+
+def create_number(nums1, nums2, k):
+    print nums1, nums2
+    m, n = len(nums1), len(nums2)
+    i = 0
+    j = 0
+
+    # to quit early
+    if m + n - i - j == k:
+        return merge(nums1, nums2, i, j)
+
+    heap1 = []
+    heap2 = []
+    number = []
+    # add items to heaps
+    ilim = min(m, m - (k - n) + 1)
+    for ii in range(i, ilim):
+        heapq.heappush(heap1, (-nums1[ii], ii))
+
+    jlim = min(n, n - (k - m) + 1)
+    for jj in range(j, jlim):
+        heapq.heappush(heap2, (-nums2[jj], jj))
+    while len(number) < k:
+        if m + n - i - j == k - len(number):
+            return number + merge(nums1, nums2, i, j)
+
+        print heap1, heap2
+        if heap1 and heap2:
+            a1, idx1 = heap1[0]
+            a2, idx2 = heap2[0]
+            if a1 == a2:
+                di = idx1 - i
+                dj = idx2 - j
+
+                if di <= dj:
+                    heap = heap1
+                    working_array = 1
+                else:
+                    heap = heap2
+                    working_array = 2
+
+            elif -a1 > -a2:
+                heap = heap1
+                working_array = 1
             else:
-                res.insert(0, nums2[v])
-                v += 1
-        return res
+                heap = heap2
+                working_array = 2
+        else:
+            if heap1:
+                heap = heap1
+                working_array = 1
+            else:
+                heap = heap2
+                working_array = 2
 
-    if i >= m:
-        return [0]
+        print '\t', heap
 
-    ai, aj = nums1[i], nums2[j]
-    if ai >= aj:
-        return max([ai] + create_number(nums1, nums2, i+1, j, k-1, mem),
-            create_number(nums1, nums2, i, j+1, k))
-    else:
-        return max([aj] + create_number(nums1, nums2, i, j+1, k-1, mem),
-            create_number(nums1, nums2, i+1, j, k))
+        a, idx = heapq.heappop(heap)
+        number.append(-a)
+        while heap and heap[0][1] < idx:
+            heapq.heappop(heap)
 
+        if working_array == 1:
+            i = idx + 1
+            if ilim < m:
+                heapq.heappush(heap, (-nums1[ilim], ilim))
+                ilim += 1
+        elif working_array == 2:
+            j = idx + 1
+            if jlim < n:
+                heapq.heappush(heap, (-nums2[jlim], jlim))
+                jlim += 1
 
-def create(nums1, nums2, k):
-    mem = {}
-    return create_number(nums1, nums2, 0, 0, k, mem)
+        print '\t\t', number, '\n'
 
+    return number
 
+import random
 import sys
 from utils.templates import fail_string
 
 def test():
     for case, ans in [
+        ([random.sample(range(8), 8), random.sample(range(8), 8), 8], 1),
+        ([[1, 2, 9, 3], [1, 2, 9, 3], 2], [9, 9]),
+        ([[1, 2, 9, 3], [], 2], [9, 3]),
+        ([[], [1, 2, 9, 3], 2], [9, 3]),
         ([[3, 4, 6, 5], [9, 1, 2, 5, 8, 3], 5], [9, 8, 6, 5, 3]),
         ([[6, 7], [6, 0, 4], 5], [6, 7, 6, 0, 4]),
         ([[3, 9], [8, 9], 3], [9, 8, 9]),
+        ([[8, 8, 8], [8, 8, 8, 8], 7], [8, 8, 8, 8, 8, 8, 8]),
     ]:
-        res = create(*case)
+        res = create_number(*case)
         try:
             assert res == ans
         except AssertionError as e:
