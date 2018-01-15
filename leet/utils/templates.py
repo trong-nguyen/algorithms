@@ -8,3 +8,7 @@ def fail_string(res, ans, case=None):
         ).format(res=res, ans=ans, case=case if case else '')
 
     return out
+
+def debug(what, flag):
+    if flag:
+        print what
