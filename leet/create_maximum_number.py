@@ -21,147 +21,90 @@ nums1 = [3, 9]
 nums2 = [8, 9]
 k = 3
 return [9, 8, 9]
+
+SOLUTION:
+    The idea is to brute-force k numbers from either array a or b. Sucessively check all scenarios where
+    i numbers come from a (hence k-i from b). This takes O(k).
+    For each scenario: i comes from a and k-i from b. We need to solve separate case efficently.
+    Then the problem reduces to:
+        - Select best numbers from a and b (k cases, i from a, k - i from b): O(m+n)
+        - Merge them O(k2)
+        - Select the largest among all merged numbers O(k2)
+        Total: O((m+n)k + k3)
+
+    To efficiently select largest possible number from a or b, stacks are required.
+    It takes linear time to solve using stacks.
+
 """
 
 DEBUG = False
-import heapq
 
-def merge(nums1, nums2, i, j):
-    # if (i, j) in mem:
-    #     return mem[(i, j)]
-    # print 'Merging', nums1[i:], nums2[j:]
+def max_number_from_array(nums, k):
+    if k < 1 or not nums or k > len(nums):
+        return []
+
+    stack = []
+    for i, v in enumerate(nums):
+        while stack and len(nums) - i + len(stack) > k and v > stack[-1]:
+            stack.pop()
+        if len(stack) < k:
+            stack.append(v)
+
+    return stack
+
+def merge(a, b, i, j):
     res = []
-    m, n = len(nums1), len(nums2)
+    m, n = len(a), len(b)
     while i < m or j < n:
         if i == m:
-            res += nums2[j:]
+            res += b[j:]
             break
         elif j == n:
-            res += nums1[i:]
+            res += a[i:]
             break
-        elif nums1[i] > nums2[j]:
-            res.append(nums1[i])
+        elif a[i] > b[j]:
+            res.append(a[i])
             i += 1
-        elif nums1[i] < nums2[j]:
-            res.append(nums2[j])
+        elif a[i] < b[j]:
+            res.append(b[j])
             j += 1
         else:
-            r1 = [nums1[i]] + merge(nums1, nums2, i + 1, j)
-            r2 = [nums2[j]] + merge(nums1, nums2, i, j + 1)
-            res += max(r1, r2)
-            break
+            ii = i
+            jj = j
+            while ii < m and jj < n and a[ii] == b[jj]:
+                ii += 1
+                jj += 1
 
-    # mem[(i, j)] = res
+            take = 1
+            if ii < m and jj < n:
+                take = 1 if a[ii] >= b[jj] else 2
+            else:
+                take = 1 if ii < m else 2
+
+            if take == 1:
+                res.append(a[i])
+                i += 1
+            else:
+                res.append(b[j])
+                j += 1
     return res
 
-def build_heap(nums, i, j):
-    heap = [(-nums[i], i) for i in range(i, j)]
-    heapq.heapify(heap)
-    return heap
+def max_number_from_2_arrays(a, b, k):
+    m, n = len(a), len(b)
+    max_number = []
 
-def compute_lim(m, n, j, k):
-    # m len of first array
-    # n len of second array
-    # j current index of second array
-    return min(m, m - (k - (n - j)) + 1)
+    # print min(m + n - k, m)
+    # print max(0, k-n), min(m, k)
+    for i in range(max(0, k-n), min(m, k) + 1):
+        j = k - i
+        a_max = max_number_from_array(a, i)
+        b_max = max_number_from_array(b, j)
 
-def create_number(nums1, nums2, i, j, k, mem):
-    if (i, j, k) in mem:
-        return mem[(i, j, k)]
+        max_number = max(max_number, merge(a_max, b_max, 0, 0))
 
-    if DEBUG: print nums1, nums2
-    m, n = len(nums1), len(nums2)
-
-    # to quit early
-    if m + n - i - j == k:
-        mem[(i, j, k)] = merge(nums1, nums2, i, j)
-        return mem[(i, j, k)]
-
-    number = []
-    # add items to heaps
-
-    ilim = compute_lim(m, n, j, k)
-    heap1 = build_heap(nums1, i, ilim)
-
-    jlim = compute_lim(n, m, i, k)
-    heap2 = build_heap(nums2, j, jlim)
-    while len(number) < k:
-        if m + n - i - j == k - len(number):
-            mem[(i, j, k)] = number + merge(nums1, nums2, i, j)
-            return mem[(i, j, k)]
-
-        if DEBUG: print heap_str(heap1), heap_str(heap2)
-        if heap1 and heap2:
-            a1, idx1 = heap1[0]
-            a2, idx2 = heap2[0]
-
-            di = idx1 - i
-            dj = idx2 - j
-            if a1 == a2:
-                # if di < dj:
-                #     heap = heap1
-                #     working_array = 1
-                # elif di > dj:
-                #     heap = heap2
-                #     working_array = 2
-                # else:
-                new_k = k - 1 - len(number)
-                r1 = [-a1] + create_number(nums1, nums2, idx1 + 1, j, new_k, mem)
-                r2 = [-a2] + create_number(nums1, nums2, i, idx2 + 1, new_k, mem)
-
-                mem[(i, j, k)] = number + max(r1, r2)
-                return mem[(i, j, k)]
-
-            elif -a1 > -a2:
-                heap = heap1
-                working_array = 1
-            else:
-                heap = heap2
-                working_array = 2
-        else:
-            if heap1:
-                heap = heap1
-                working_array = 1
-            else:
-                heap = heap2
-                working_array = 2
-
-        if DEBUG: print '\t', heap_str(heap)
-
-        a, idx = heapq.heappop(heap)
-        number.append(-a)
-        while heap and heap[0][1] < idx:
-            heapq.heappop(heap)
-
-        if working_array == 1:
-            di = idx - i
-            i = idx + 1
-            if ilim < m:
-                heapq.heappush(heap, (-nums1[ilim], ilim))
-                ilim += 1
-
-            jlim = compute_lim(n, m, i, k - len(number))
-            heap2 = build_heap(nums2, j, jlim)
-
-        elif working_array == 2:
-            dj = idx - j
-            j = idx + 1
-            if jlim < n:
-                heapq.heappush(heap, (-nums2[jlim], jlim))
-                jlim += 1
+    return max_number
 
 
-            ilim = compute_lim(m, n, j, k - len(number))
-            heap1 = build_heap(nums1, i, ilim)
-
-        if DEBUG: print '\t', heap_str(heap1), heap_str(heap2)
-        if DEBUG: print '\t\t', number, '\n'
-
-    mem[(i, j, k)] = number
-    return number
-
-def heap_str(heap):
-    return [-v for v,_ in heap]
 
 class Solution(object):
     def maxNumber(self, nums1, nums2, k):
@@ -171,12 +114,20 @@ class Solution(object):
         :type k: int
         :rtype: List[int]
         """
-        mem = {}
-        return create_number(nums1, nums2, 0, 0, k, mem)
+        return max_number_from_2_arrays(nums1, nums2, k)
 
 import random
 import sys
 from utils.templates import fail_string, debug
+
+def unit_test():
+    assert max_number_from_array([], 1) == []
+    assert max_number_from_array([1], 10) == []
+    assert max_number_from_array([9, 1, 8, 5, 6, 3, 4], 3) == [9, 8, 6]
+    assert max_number_from_array([8, 8, 8, 8], 2) == [8, 8]
+
+    assert max_number_from_array([9, 1, 8, 5, 6, 3, 4], 7) == [9, 1, 8, 5, 6, 3, 4]
+    assert max_number_from_array([9, 1, 8, 9, 8, 5, 6, 3, 4], 7) == [9, 9, 8, 5, 6, 3, 4]
 
 def test():
     solution = Solution()
@@ -208,3 +159,4 @@ def test():
 
 if __name__ == '__main__':
     test()
+    unit_test()
