@@ -33,24 +33,48 @@ class LinkedList(object):
         self.tail = Node()
         self.head = Node()
 
-        self.tail.next = self.head
-        self.head.previous = self.tail
+        self.tail.front = self.head
+        self.head.rear = self.tail
+
+    def insert_head(self, node):
+        head, tail = self.head, self.tail
+
+        rear = head.rear
+        head.rear, node.front = node, head
+        rear.front, node.rear = node, rear
+
+    def insert_tail(self, node):
+        tail = self.tail
+
+        front = tail.front
+        tail.front, node.rear = node, tail
+        front.rear, node.front = node, front
+
+    def remove_head(self):
+        if self.empty():
+            return
+
+        pluck_off(self.head.rear)
+
+    def remove_tail(self):
+        if self.empty():
+            return
+
+        pluck_off(self.tail.front)
+
+    def empty(self):
+        return tail.front is head.rear
+
+
 
 class Node(object):
     """docstring for Node"""
-    def __init__(self, data):
+    def __init__(self, data=None):
         super(Node, self).__init__()
         self.data = data
 
 def pluck_off(node):
-    node.next.previous, node.previous.next = node.previous, node.next
-
-
-class Branch(object):
-    def __init__(self):
-        return
-
-    def insert(self, node):
+    node.front.rear, node.rear.front = node.rear, node.front
 
 
 class LFUCache(object):
@@ -61,6 +85,7 @@ class LFUCache(object):
         """
         self.capacity = capacity
         self.items = dict()
+        self.linked_branches = LinkedList()
         self.branches = dict()
 
 
@@ -76,7 +101,7 @@ class LFUCache(object):
 
         self.increase_frequency(node)
 
-        return node.value
+        return node.data['value']
 
 
     def put(self, key, value):
@@ -86,39 +111,59 @@ class LFUCache(object):
         :rtype: void
         """
         if key in self.items:
-            node = self.items[keys]
+            node = self.items[key]
             increase_frequency(node)
 
         else:
             if len(self.items) == self.capacity:
                 evict_one()
 
-            insert_one(key, value)
+            self.insert_one(key, value)
 
     def create_branch(self, f):
         if f not in self.branches:
-            self.branches[f] = Branch(f)
-        return self.branches[f]
+            self.branches[f] = Node(data={
+                'key': f,
+                'value': LinkedList()
+                })
+        return self.branches[f].data['value']
 
     def increase_frequency(self, node):
-        f = node.frequency
+        """
+        basically move a node from one branch to another with +1 higher frequency
+        """
+        f = node.data['frequency']
 
         branch = self.create_branch(f + 1)
         pluck_off(node)
-        insert_to(branch)
+        branch.data['value'].insert_head(node)
+        node.data['frequency'] += 1
 
     def evict_one(self):
-        branch = tail.next
-        pluck_off(branch.head.next)
+        branch = linked_branches.tail.front
+
+        if not branch.data:
+            return
+
+        branch = branch.data['value']
+        if branch.empty():
+            return
+
+        node = branch.tail.front
+        pluck_off(node)
+
+        if branch.empty():
+            b = linked_branches[node.data['frequency']]
+            pluck_off(b)
+            del self.branches[b]
+
+        del self.items[node.data['key']]
 
     def insert_one(self, key, value):
         branch = self.create_branch(1)
 
-        branch.add_node(key)
-
-        if 1 not in self.branches:
-            self.branches[1] =
-        return
+        node = Node({'key': key, 'value': value, 'frequency': 1})
+        branch.insert_head(node)
 
 
 import sys
@@ -130,7 +175,7 @@ def test():
     # try:
     cache.put(1, 1)
     cache.put(2, 2)
-    assert cache.get(1) == 1       # returns 1
+    assert cache.get(1) == 1, cache.get(1)       # returns 1
     cache.put(3, 3)    # evicts key 2
     assert cache.get(2) == -1       # returns -1 (not found)
     assert cache.get(3) == 3       # returns 3.
