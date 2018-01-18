@@ -24,6 +24,37 @@ cache.put(4, 4);    // evicts key 1.
 cache.get(1);       // returns -1 (not found)
 cache.get(3);       // returns 3
 cache.get(4);       // returns 4
+
+SOLUTION:
+    Thinking process:
+        - Define the problem: a cache with preset capacity, "put" pushes item to to the cache, "get" accesses stored items and return if available
+        - Define "use": every time an item is "put" or "get" its frequency is increased by one
+        - If an item with key already stored another put with the same key will update the value and increase its frequency by 1 as well
+        - Least-Frequently-Used: the one with smallest number of "use"s
+        - Least-Recently-Used: the one with farthest access.
+        Assume cache capacity is 2
+        Say an item with key=1 and value=1 is put to the cache, its frequency is 1
+        A get(1) will increase its frequency to 2
+        Another put and a get of an item with key=2 and value=2 will store the item in the cache with frequency 2
+        Now if we put a new item say key=3 value=3, the item with key 1 will be evicted / removed cause although items 1 and 2 has the same frequency
+        item 1 was last accessed before item 2 or in other words, item 2 access is "newer".
+
+    Algorithm:
+        From the definition, the requirements are:
+        - To allow O(1) accesses and removals, LinkedHashMap is neccessary as in LRU implementation
+        - But now we need to store the access frequency for each item
+        - The eviction scheme is based on access frequency AND if tied (equal frequency) on latest use
+        - Each access only increase frequency by 1
+        We have to maintain an ordered list where we can always access the least priority (lowest frequency / least recently) instantly in O(1)
+        So the idea is:
+        - HashMap M1 to store all items, each item has key, value AND frequency fields
+        - A LinkedList (L1) is used to store branches, ordered by access frequency.
+        - Each branch contains the items with equal access frequency and is itself another LinkedList (Li) with the more recently used closer to the head,
+            and less recently to the tail.
+        - Another HashMap M2 is used to store branches keyed by frequency
+        - Thus to evict one node, we get a hold of the branch next to the tail of L1 let's say Li and select the tail of Li, pluck it off Li, get its key
+        and frequency, delete it from M1 and if Li (after eviction) is empty remove it from L1 and M2 as well
+        - To update a node frequency, access it from M1, get its key and frequency, move it from Li to L(i+1), create L(i+1) or remove Li if neccessary.
 """
 class LinkedList(object):
     """docstring for LinkedList"""
@@ -417,21 +448,6 @@ def test_6():
     cache = LFUCache(ips[0][0])
 
     for i, (cmd, ip) in enumerate(zip(commands[1:], ips[1:])):
-        # if ip[0] == 3:
-        #     print '{}: {} {}, cache {}'.format(i, cmd, ip, len(cache))
-        #     print cache.branch_str()
-        #     for k in sorted(cache.branches.keys()):
-        #         print '{}: {}'.format(k, cache.get_branch(k))
-        # if cmd == 'put':
-        #     try:
-        #         cache.put(*ip)
-        #     except KeyError as e:
-        #         print '{}: {} {}, cache {}'.format(i, cmd, ip, len(cache))
-        #         print cache.branch_str()
-        #         for k in sorted(cache.branches.keys()):
-        #             print '{}: {}'.format(k, cache.get_branch(k))
-        #         raise
-
         if cmd == 'put':
             cache.put(*ip)
         elif cmd == 'get':
