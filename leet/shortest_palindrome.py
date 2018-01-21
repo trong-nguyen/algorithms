@@ -9,6 +9,46 @@ For example:
 Given "aacecaaa", return "aacecaaa".
 
 Given "abcd", return "dcbabcd".
+
+SOLUTION:
+    The problem can be solved naively in O(n2) by searching for longest palindromes starting at index 0
+    Doing some research on Knuth-Morris-Pratt suggests a linear O(n) time solution
+    The central idea is to create an efficient and clever "backtracking" system based on not one
+    but an array of information. In this case, that array is the entire word.
+
+    Think about it, the naive solution progresses linearly and each time takes linear effort to search
+    for a possible palindrome.
+
+    The KMP improves by accelerating the progresses significantly. Intuitively, it is clear that in the naive
+    solution we scan the array over and over again only differ by a single character. Just like you go through
+    a street repetitively each time looking for a different item. It could be much more efficient that we have a
+    list of items to search for before hand. By that way in the process of looking for item i we take note that
+    we encountered / didnot encounter item j so that we don't need to go backward just to browse through the old
+    information again looking for item j. This technique can only be made possible if we planned that we are going
+    to search for item i and j (and possibly k, l, m).
+
+    Algorithm:
+        - The KMP solution requires to build a failure table T[i] that has the same size of the search word W
+        - So that on searching the string S for the word W, we already know what we are and are not looking for
+        - Assume that at index i on the the string S the match begins up to index j, instead of going back to index
+        i + 1 looking for word W, which by the way matched from index 0 to index j W[0:j], we can consult table T at
+        position i T[i] to: continue on to index j + 1 knowing that if there is a sub pattern within W[0:k] we can match
+        against the S[l:l+k] where i < l and k < j. The index k was precomputed in the failure table T just by accessing T[j]
+        - The actual brilliant algorithm can only be explained by sliding the same W against itself looking for the so called
+        longest proper suffix which at the same time profer prefix of the word considered up to index j W[0:j]
+
+        - Then after having the failure table, the shortest palindrome problem can be solved cleverly by
+        search for word W on the inverse of itself W[::-1]. This will result in the longest match between the suffix of the
+        inverse of W and W which at worst case, will at least match at W[::-1][-1] since of course abc[0] == abc[::-1][-1]
+        W[::-1]:    --------x
+        W:                  x--------
+
+        - But in other cases it might matches some where in the middle for example
+        W[::-1]:    ----xyzkzyx
+        W:              xyzkzyx----
+
+        - Look at the algorithm, think about it and read more about Knuth-Morris-Pratt to enlighten yourself.
+
 """
 
 def slide_build_table(w):
@@ -56,64 +96,6 @@ class Solution(object):
         :rtype: str
         """
         return build_shortest_palindrome(s)
-
-def build_failure_table(w):
-    if not w:
-        return []
-
-    table = [-1] + [0] * (len(w) - 1)
-    for i in range(1, len(w)):
-
-        d = table[i-1]
-        if w[i-1] == w[d]:
-            table[i] = table[i-1] + 1
-
-
-    return table
-
-def second_sweep(w, table):
-    def satisfied(i, d, w):
-        return w[i] != w[d] and w[i-d:i] == w[:d]
-
-    # now checking w[i] which have boolean values (i.e. t[i]
-    # corresponding to s[i] being not w[i])
-    for i in range(1, len(w)):
-        d = table[i]
-
-        if w[i] == w[d]:
-            if d == 0:
-                table[i] = -1
-            else:
-                for j in range(d-1, -1, -1):
-                    if satisfied(i, j, w):
-                        table[i] = j
-                        break
-                    elif j == 0: # if not satisfied even when j=0
-                        table[i] = -1
-
-
-    return table
-
-def third_sweep(w, table):
-    def satisfied(i, d, w):
-        return w[i] != w[d] and w[i-d:i] == w[:d]
-
-    # now checking w[i] which have boolean values (i.e. t[i]
-    # corresponding to s[i] being not w[i])
-    for i in range(1, len(w)):
-        d = table[i-1]
-
-        if d > table[i]:
-            for j in range(d-1, -1, -1):
-                if satisfied(i, j, w):
-                    table[i] = j
-                    break
-
-
-    return table
-
-def knuth_morris_pratt(s):
-    return 's'
 
 import sys
 from utils.templates import fail_string
