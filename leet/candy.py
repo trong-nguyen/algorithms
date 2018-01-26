@@ -79,13 +79,42 @@ def give_candy(ratings):
     # print recorded
     return candies
 
+def give_illogical_candies(ratings):
+    n = len(ratings)
+    if n == 0:
+        return 0
+    if n == 1:
+        return 1
+
+
+    lcandies = [1] * n
+    rcandies = [1] * n
+    for i in range(1, n):
+        if ratings[i] > ratings[i-1]:
+            lcandies[i] = lcandies[i-1] + 1
+
+    for i in range(n-2, -1, -1):
+        if ratings[i] > ratings[i+1]:
+            rcandies[i] = rcandies[i+1] + 1
+
+    candies = [1] * n
+    candies[0] = rcandies[0]
+    candies[-1] = lcandies[-1]
+
+    for i in range(1, n - 1):
+        candies[i] = max(lcandies[i], rcandies[i])
+
+    # print candies
+    return sum(candies)
+
 class Solution(object):
     def candy(self, ratings):
         """
         :type ratings: List[int]
         :rtype: int
         """
-        return give_candy(ratings)
+        # return give_candy(ratings)
+        return give_illogical_candies(ratings)
 
 import random
 import sys
@@ -94,6 +123,7 @@ from utils.templates import fail_string
 def test():
     solution = Solution()
     for case, ans in [
+        ([[1, 2, 2]], 4),
         ([[]], 0),
         ([[1e6]], 1),
         ([[1, 100]], 3),
