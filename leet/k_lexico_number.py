@@ -30,12 +30,14 @@ def full_bracket(d, k):
     print '\t digits {}, k {}'.format(d, k)
     if k == 0:
         return ''
-    elif d == 1:
-        return str(k - 2)
+    if d == 1:
+        return str(k - 1)
+
+    k -= 1 # the 1st empty digit
 
     a = k / BRACKETS[d - 1]
     b = k % BRACKETS[d - 1]
-    print '\t\t', a, b
+
     return str(a) + full_bracket(d - 1, b)
 
 def which_bracket(n, k):
@@ -48,48 +50,62 @@ def which_bracket(n, k):
     n_digits = map(int, str(n))
     d = len(str(n))
 
-    B1 = BRACKETS[max((d - 1), 0)]
-    B2 = BRACKETS[max((d - 2), 0)]
 
-    lower_bracket = max(n_digits[0] - 1, 0)
-    lower_brackets = lower_bracket * B1 # base is 1 (the first round) it has no 0 layer
+    lower_bracket = BRACKETS[max((d - 1), 0)]
+    lower_brackets = lower_bracket * max(n_digits[0] - 1, 0) # base is 1 (the first round) it has no 0 layer
 
-    upper_bracket = 9 - n_digits[0]
-    upper_brackets = upper_bracket * B2
+    upper_bracket = BRACKETS[max((d - 2), 0)]
+    upper_brackets = upper_bracket * (9 - n_digits[0])
 
     print lower_brackets, n - upper_brackets, n, 'n {}, k {}, d {}'.format(n, k, d)
 
     if k <= lower_brackets:
         p = (k - 1)
-        prefix = str(p / lower_bracket)
+        prefix = str(p / lower_bracket + 1)
         return prefix + full_bracket(d - 1, p % lower_bracket)
     elif k > n - upper_brackets:
         p = k - (n - upper_brackets) - 1
         prefix = str(n_digits[0] + 1 + p / upper_bracket)
+        print p, prefix, p % upper_bracket
         return prefix + full_bracket(d - 2, p % upper_bracket)
     else:
         p = n - lower_brackets - upper_brackets - 1
-        return str(n_digits[0]) + fractional_bracket(p, k - lower_brackets - 1)
+        prefix = str(n_digits[0])
+        return prefix + fractional_bracket(''.join(map(str, n_digits[1:])), k - lower_brackets - 1)
+        # prefix = str(n_digits[0])
+        # return prefix + full_bracket(d - 1, k - lower_brackets - 1)
 
-def fractional_bracket(n, k):
+def fractional_bracket(lim, k):
     if k == 0:
         return ''
-    elif n < 11:
-        return str(k - 2)
 
-    n_digits = map(int, str(n))
+    n_digits = map(int, str(lim))
     d = len(n_digits)
 
-    B1 = BRACKETS[max((d - 1), 0)]
-    B2 = BRACKETS[max((d - 2), 0)]
+    if d == 1:
+        return str(k - 1)
 
-    lower_bracket = n_digits[0]
-    lower_brackets = lower_bracket * B1 # base is 1 (the first round) it has no 0 layer
+    n = int(lim) + 10 ** (d - 1)
+    k -= 1
 
-    upper_bracket = 9 - n_digits[0]
-    upper_brackets = upper_bracket * B2
 
-    print lower_brackets, n - upper_brackets, n, 'n {}, k {}, d {}'.format(n, k, d)
+    # print '\tn {}, k {}, d {}'.format(n, k, d)
+    # a = k / BRACKETS[d-1]
+    # b = k % BRACKETS[d-1]
+
+
+
+
+    # return str(n_digits[0]) + fractional_bracket(n - n_digits[0] * 10 ** (d - 1), b)
+
+    lower_bracket = BRACKETS[max((d - 1), 0)]
+    lower_brackets = lower_bracket * max(n_digits[0], 0) # base is 1 (the first round) it has no 0 layer
+
+    upper_bracket = BRACKETS[max((d - 2), 0)]
+    upper_brackets = upper_bracket * (9 - n_digits[0])
+
+    print 'Range:', lower_brackets, upper_brackets, n
+    print '\tn {}, k {}, d {}'.format(n, k, d)
 
     if k < lower_brackets:
         p = k
@@ -97,11 +113,10 @@ def fractional_bracket(n, k):
         return prefix + full_bracket(d - 1, p % lower_bracket)
     elif k >= n - upper_brackets:
         p = k - (n - upper_brackets)
-        prefix = str(n_digits[0] + 1 + p / upper_bracket)
+        prefix = str(n_digits[0] + p / upper_bracket)
         return prefix + full_bracket(d - 2, p % upper_bracket)
     else:
-        p = n - lower_brackets - upper_brackets
-        return str(n_digits[0]) + fractional_bracket(p, k - lower_brackets)
+        return str(n_digits[0]) + fractional_bracket(lim[1:], k - lower_brackets)
 
 
 
@@ -110,7 +125,7 @@ def k_lexico(n, k):
     if n < 9:
         return str(k)
 
-    res = which_bracket(n, k, 1)
+    res = which_bracket(n, k)
     return res
     # return int(str(int(res[0]) + 1) + res[1:])
 
@@ -144,22 +159,28 @@ def test():
 
     solution = Solution()
     for case, ans in [
-        # ([10, 3], True),
-        ([38, 25], True),
-        (generate_random_nk(100), True),
-        (generate_random_nk(1000), True),
-        (generate_random_nk(10000), True),
-        ([222, 222], True),
-        ([100, 57], True),
-        ([1000, 578], True),
-
-        ([35, 32], True),
+        # ([9999, 8000], True),
+        ([6716, 6355], True),
+        ([852, 826], True),
         ([35, 15], True),
+        ([10, 3], True),
+        ([38, 25], True),
+        ([35, 32], True),
         ([15, 4], True),
         ([2, 2], True),
         ([10, 3], True),
         ([1, 1], True),
         ([13, 2], True),
+        ([349, 15], True),
+        ([1000, 578], True),
+        ([222, 222], True),
+
+        ([100, 57], True),
+
+        (generate_random_nk(100), True),
+        (generate_random_nk(1000), True),
+        (generate_random_nk(10000), True),
+        (generate_random_nk(1000000), True),
 
     ]:
         res = solution.findKthNumber(*case)
