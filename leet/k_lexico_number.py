@@ -18,6 +18,8 @@ Explanation:
 The lexicographical order is [1, 10, 11, 12, 13, 2, 3, 4, 5, 6, 7, 8, 9], so the second smallest number is 10.
 """
 
+DEBUG = False
+
 from math import log
 
 BRACKETS = [int('1' * i) for i in range(1, 10)]
@@ -27,7 +29,7 @@ def full_bracket(d, k):
     base 0
     d digits includes the prefix
     """
-    print '\t digits {}, k {}'.format(d, k)
+    if DEBUG: print '\t digits {}, k {}'.format(d, k)
     if k == 0:
         return ''
     if d == 1:
@@ -38,6 +40,8 @@ def full_bracket(d, k):
     a = k / BRACKETS[d - 1]
     b = k % BRACKETS[d - 1]
 
+    prefix = str(a)
+    if DEBUG: print '\t[{}] FB'.format(prefix)
     return str(a) + full_bracket(d - 1, b)
 
 def which_bracket(n, k):
@@ -57,22 +61,24 @@ def which_bracket(n, k):
     upper_bracket = BRACKETS[max((d - 2), 0)]
     upper_brackets = upper_bracket * (9 - n_digits[0])
 
-    print lower_brackets, n - upper_brackets, n, 'n {}, k {}, d {}'.format(n, k, d)
+
+    if DEBUG: print 'Fractional range: [0 {} {} {}]'.format(lower_brackets, n - upper_brackets, n)
+    if DEBUG: print '\tk={}, n={}'.format(k, n)
 
     if k <= lower_brackets:
         p = (k - 1)
         prefix = str(p / lower_bracket + 1)
-        print 'Which Lower, pref {}'.format(prefix)
+        if DEBUG: print '[{}] Which Lower'.format(prefix)
         return prefix + full_bracket(d - 1, p % lower_bracket)
     elif k > n - upper_brackets:
         p = k - (n - upper_brackets) - 1
         prefix = str(n_digits[0] + 1 + p / upper_bracket)
-        print 'Which Higher, pref {}'.format(prefix)
+        if DEBUG: print '[{}] Which Higher'.format(prefix)
         return prefix + full_bracket(d - 2, p % upper_bracket)
     else:
         p = n - lower_brackets - upper_brackets - 1
         prefix = str(n_digits[0])
-        print 'Which Mid, pref {}'.format(prefix)
+        if DEBUG: print '[{}] Which Mid'.format(prefix)
         return prefix + fractional_bracket(''.join(map(str, n_digits[1:])), k - lower_brackets - 1)
         # prefix = str(n_digits[0])
         # return prefix + full_bracket(d - 1, k - lower_brackets - 1)
@@ -87,7 +93,7 @@ def fractional_bracket(lim, k):
     if d == 1:
         return str(k - 1)
 
-    n = int(lim) + BRACKETS[max((d - 1), 0)] - 1
+    n = int(lim) + BRACKETS[max((d - 1), 0)]
     k -= 1
 
     lower_bracket = BRACKETS[max((d - 1), 0)]
@@ -96,35 +102,23 @@ def fractional_bracket(lim, k):
     upper_bracket = BRACKETS[max((d - 2), 0)]
     upper_brackets = upper_bracket * (9 - n_digits[0])
 
-    print 'Range:', lower_brackets, upper_brackets, n
-    print '\tn {}, k {}, d {}'.format(n, k, d)
+    if DEBUG: print 'Fractional range: [0 {} {} {}]'.format(lower_brackets, n - upper_brackets, n)
+    if DEBUG: print '\tk={}, lim={}'.format(k, lim)
 
     if k < lower_brackets:
         p = k
         prefix = str(p / lower_bracket)
-        print 'Lower, pref {}'.format(prefix)
+        if DEBUG: print '[{}] Lower'.format(prefix)
         return prefix + full_bracket(d - 1, p % lower_bracket)
     elif k >= n - upper_brackets:
         p = k - (n - upper_brackets)
-        prefix = str(n_digits[0] + p / upper_bracket)
-        print 'Higher, pref {}'.format(prefix)
+        prefix = str(n_digits[0] + 1 + p / upper_bracket)
+        if DEBUG: print '[{}] Higher'.format(prefix)
         return prefix + full_bracket(d - 2, p % upper_bracket)
     else:
         prefix = str(n_digits[0])
-        print 'Fractional, pref {}'.format(prefix)
+        if DEBUG: print '[{}] Fractional'.format(prefix)
         return prefix + fractional_bracket(lim[1:], k - lower_brackets)
-
-
-
-
-def k_lexico(n, k):
-    if n < 9:
-        return str(k)
-
-    res = which_bracket(n, k)
-    return res
-    # return int(str(int(res[0]) + 1) + res[1:])
-
 
 
 class Solution(object):
@@ -134,7 +128,7 @@ class Solution(object):
         :type k: int
         :rtype: int
         """
-        return k_lexico(n, k)
+        return which_bracket(n, k)
 
 import random
 import sys
@@ -146,15 +140,71 @@ def brute_force(n, k):
     l = sorted(l)
     return int(l[k - 1])
 
+def brute_force_array(n):
+    l = list(range(1, n+1))
+    l = map('{{:<{}}}'.format(len(str(n))).format, l)
+    l = sorted(l)
+    return l
+
+def generate_random_nk(n):
+    n = random.randint(1, n)
+    k = random.randint(1, n)
+    return n, k
+
+def test2():
+    solution = Solution()
+
+    for c in range(100):
+        case = generate_random_nk(random.randint(1, 10**6 + 1))
+        res = solution.findKthNumber(*case)
+        ans = str(brute_force(*case))
+        try:
+            assert res == ans
+        except AssertionError as e:
+            status = fail_string(res=res, ans=ans, case=case)
+            sys.exit(status)
+
+        print 'Test {}: n={:<8} k={:<8} ans={:<8} passed!'.format(c, case[0], case[1], ans)
+
+
+def test3():
+    solution = Solution()
+
+    for c in range(1000):
+        case = generate_random_nk(random.randint(1, 10**5 + 1))
+        res = solution.findKthNumber(*case)
+        ans = str(brute_force(*case))
+        try:
+            assert res == ans
+        except AssertionError as e:
+            status = fail_string(res=res, ans=ans, case=case)
+            sys.exit(status)
+
+        print 'Test {}: n={:<8} k={:<8} ans={:<8} passed!'.format(c, case[0], case[1], ans)
+
+
+def test_exhausted():
+    solution = Solution()
+
+    n = 10 ** 5
+    ans_array = brute_force_array(n)
+    for k in range(1, n+1):
+        res = solution.findKthNumber(n, k)
+        ans = ans_array[k - 1].strip()
+        try:
+            assert res == ans
+        except AssertionError as e:
+            status = fail_string(res=res, ans=ans, case=(n, k))
+            sys.exit(status)
+
+        print 'Test {}: n={:<8} k={:<8} ans={:<8} passed!'.format(k, n, k, ans)
+
 def test():
-    def generate_random_nk(n):
-        n = random.randint(1, n)
-        k = random.randint(1, n)
-        return n, k
-
-
     solution = Solution()
     for case, ans in [
+        ([1695, 474], True),
+        ([141275, 45794], True),
+        ([9999, 8000], True),
         ((247887, 168074), True),
         ([9999, 8000], True),
         ([6716, 6355], True),
@@ -171,7 +221,6 @@ def test():
         ([349, 15], True),
         ([1000, 578], True),
         ([222, 222], True),
-
         ([100, 57], True),
 
         (generate_random_nk(100), True),
@@ -190,4 +239,7 @@ def test():
             sys.exit(status)
 
 if __name__ == '__main__':
+    test_exhausted()
+    test3()
     test()
+    test2()
