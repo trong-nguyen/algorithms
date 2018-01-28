@@ -16,6 +16,134 @@ Output:
 
 Explanation:
 The lexicographical order is [1, 10, 11, 12, 13, 2, 3, 4, 5, 6, 7, 8, 9], so the second smallest number is 10.
+
+SOLUTION:
+    You have to learn how to count lexicographically. Basically the rules are:
+    - From left to right
+    - Empty < numerics: _ < 0 < 1 ... < 9
+    - Counting depends on the maximum number of available digits. i.e. if in a count the max digits possible is 6,
+    then 999999 will be the biggest. There are a total number of 11 groups:
+        + Empty group
+        + 9 numerical-prefixed groups:
+            1 _
+            1 x
+            1 x x
+            1 x x x
+            1 x x x x
+            1 x x x x x
+
+            ...
+
+            9 _
+            9 x
+            9 x x
+            9 x x x
+            9 x x x x
+            9 x x x x x
+
+        + After that, in each group, for ex. group 5 we would have 11 sub-groups including the first empty character group:
+            5
+              _ : first group is empty, which mean the number 5 itself
+
+              0
+              0 x
+              0 x x
+              0 x x x
+              0 x x x x
+
+            ...
+
+              9
+              9 x
+              9 x x
+              9 x x x
+              9 x x x x
+
+        + Successively:
+            5
+              5
+                _ : empty
+
+                0
+                0 x
+                0 x x
+                0 x x x
+
+            ...
+
+                9
+                9 x
+                9 x x
+                9 x x x
+
+        + The formula is, except for the first digit, where the empty group and 0-prefixed group is excluded,
+        the number of items in a group would be: sum(1 + 10^1 + 10^2 + ... + 10^(d-1)) where d is the max number of digits.
+        It translates to
+            d = 1: 1   items
+            d = 2: 11  items
+            d = 3: 111 items
+            ...
+
+
+    Problem framing: given n find k-th largest.
+        - The digits are now capped by n not the total number of digits.
+        - The counting then would be divided into 3 parts: let's take n=5437
+            + First part: i from 1 to 4, max digits are 4
+                i=[1:4]
+                  _
+                  x
+                  x x
+                  x x x
+
+            + Second part: i is 5, but capped by 437, max digits are 4
+                5 _
+                  x
+                  x x
+                  x x x
+
+            + Third part: i from 6 to 9, with max digits are 3
+                i=[6:9]
+                  _
+                  x
+                  x x
+
+        - In order to know our k-th largest falls in which bracket (first to third), note that the size of:
+            + First part
+                n1 is [1:4] * subgroups with 3 digits max = 4 * 111 = 555 numbers
+            + Third part
+                n3 is [6:9] * subgroups with 2 digits max = 4 * 11 = 44 numbers
+            + Second part
+                n2 = n - n1 - n3 = 5437 - 555 - 44 = 4838
+
+        - Then if:
+                   k <= 555:    search in the first part
+             555 < k <= 5393:   search in the second part
+            5393 < k:           search in the third part
+
+        - The search in the first and third parts are similar:
+            + All digits are allowed so we search for every possible digit
+            + find the prefix i-th bracket by dividing k for the number of items in each brackets (depending on max digits allowed)
+            + entering the i-th bracket, the problem is recursive by modulo of k_new = k % bracket items, number of max digits reduced by 1
+            + Note that for the full bracket searching there are a total number of 1 (empty-charactered group) + 10 (digit-led group)
+            + So we have to subtract 1 item (the empty character group) before proceeding into one of the 10 sub-bracket group. E.g:
+                We need to find the k=34 largest number in the 2 digit search (e.g n=99), is equivalent to finding the
+                k = k-1 = 33-th largest item in the 10 sub group (from 0x to 9x), each have 11 elements.
+                That number is 4 from
+                    first digit:  (34-1) / 11 + 1 = 4 (plus 1 due to 1-indexed)
+                    second digit: [(34-1) % 11] / 1 = '' (empty since k=0 means the first item in the subbracket which is empty)
+
+                Similary the 35-th largest would be 40 and 36-th is 41
+
+
+
+        - The second part is tricky since we are capped somewhere in the middle of the bracket by the value n. However:
+            + The first prefix is known (e.g. 5 in n=5437, k=5112)
+            + New n would be calculated by n_new = n - n1 - n3 as above
+            + New k would be k_new = k - n1
+            + Then we can proceed recursively with the subproblem find the k_new largest item in the n_new number capped by n
+            + Note that now in the sub problem the first prefix can be both empty and 0 since it is actually the second prefix in the original problem
+
+
 """
 
 DEBUG = False
@@ -62,8 +190,9 @@ def which_bracket(n, k):
     upper_brackets = upper_bracket * (9 - n_digits[0])
 
 
-    if DEBUG: print 'Fractional range: [0 {} {} {}]'.format(lower_brackets, n - upper_brackets, n)
-    if DEBUG: print '\tk={}, n={}'.format(k, n)
+    if DEBUG:
+        print 'Fractional range: [0 {} {} {}]'.format(lower_brackets, n - upper_brackets, n)
+        print '\tk={}, n={}'.format(k, n)
 
     if k <= lower_brackets:
         p = (k - 1)
@@ -76,12 +205,9 @@ def which_bracket(n, k):
         if DEBUG: print '[{}] Which Higher'.format(prefix)
         return prefix + full_bracket(d - 2, p % upper_bracket)
     else:
-        p = n - lower_brackets - upper_brackets - 1
         prefix = str(n_digits[0])
         if DEBUG: print '[{}] Which Mid'.format(prefix)
         return prefix + fractional_bracket(''.join(map(str, n_digits[1:])), k - lower_brackets - 1)
-        # prefix = str(n_digits[0])
-        # return prefix + full_bracket(d - 1, k - lower_brackets - 1)
 
 def fractional_bracket(lim, k):
     if k == 0:
@@ -102,8 +228,9 @@ def fractional_bracket(lim, k):
     upper_bracket = BRACKETS[max((d - 2), 0)]
     upper_brackets = upper_bracket * (9 - n_digits[0])
 
-    if DEBUG: print 'Fractional range: [0 {} {} {}]'.format(lower_brackets, n - upper_brackets, n)
-    if DEBUG: print '\tk={}, lim={}'.format(k, lim)
+    if DEBUG:
+        print 'Fractional range: [0 {} {} {}]'.format(lower_brackets, n - upper_brackets, n)
+        print '\tk={}, lim={}'.format(k, lim)
 
     if k < lower_brackets:
         p = k
@@ -202,6 +329,7 @@ def test_exhausted():
 def test():
     solution = Solution()
     for case, ans in [
+        ([90, 34], True),
         ([1695, 474], True),
         ([141275, 45794], True),
         ([9999, 8000], True),
@@ -239,7 +367,7 @@ def test():
             sys.exit(status)
 
 if __name__ == '__main__':
-    test_exhausted()
-    test3()
     test()
     test2()
+    test3()
+    test_exhausted()
