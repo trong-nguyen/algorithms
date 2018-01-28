@@ -62,15 +62,17 @@ def which_bracket(n, k):
     if k <= lower_brackets:
         p = (k - 1)
         prefix = str(p / lower_bracket + 1)
+        print 'Which Lower, pref {}'.format(prefix)
         return prefix + full_bracket(d - 1, p % lower_bracket)
     elif k > n - upper_brackets:
         p = k - (n - upper_brackets) - 1
         prefix = str(n_digits[0] + 1 + p / upper_bracket)
-        print p, prefix, p % upper_bracket
+        print 'Which Higher, pref {}'.format(prefix)
         return prefix + full_bracket(d - 2, p % upper_bracket)
     else:
         p = n - lower_brackets - upper_brackets - 1
         prefix = str(n_digits[0])
+        print 'Which Mid, pref {}'.format(prefix)
         return prefix + fractional_bracket(''.join(map(str, n_digits[1:])), k - lower_brackets - 1)
         # prefix = str(n_digits[0])
         # return prefix + full_bracket(d - 1, k - lower_brackets - 1)
@@ -85,18 +87,8 @@ def fractional_bracket(lim, k):
     if d == 1:
         return str(k - 1)
 
-    n = int(lim) + 10 ** (d - 1)
+    n = int(lim) + BRACKETS[max((d - 1), 0)] - 1
     k -= 1
-
-
-    # print '\tn {}, k {}, d {}'.format(n, k, d)
-    # a = k / BRACKETS[d-1]
-    # b = k % BRACKETS[d-1]
-
-
-
-
-    # return str(n_digits[0]) + fractional_bracket(n - n_digits[0] * 10 ** (d - 1), b)
 
     lower_bracket = BRACKETS[max((d - 1), 0)]
     lower_brackets = lower_bracket * max(n_digits[0], 0) # base is 1 (the first round) it has no 0 layer
@@ -110,13 +102,17 @@ def fractional_bracket(lim, k):
     if k < lower_brackets:
         p = k
         prefix = str(p / lower_bracket)
+        print 'Lower, pref {}'.format(prefix)
         return prefix + full_bracket(d - 1, p % lower_bracket)
     elif k >= n - upper_brackets:
         p = k - (n - upper_brackets)
         prefix = str(n_digits[0] + p / upper_bracket)
+        print 'Higher, pref {}'.format(prefix)
         return prefix + full_bracket(d - 2, p % upper_bracket)
     else:
-        return str(n_digits[0]) + fractional_bracket(lim[1:], k - lower_brackets)
+        prefix = str(n_digits[0])
+        print 'Fractional, pref {}'.format(prefix)
+        return prefix + fractional_bracket(lim[1:], k - lower_brackets)
 
 
 
@@ -159,7 +155,8 @@ def test():
 
     solution = Solution()
     for case, ans in [
-        # ([9999, 8000], True),
+        ((247887, 168074), True),
+        ([9999, 8000], True),
         ([6716, 6355], True),
         ([852, 826], True),
         ([35, 15], True),
