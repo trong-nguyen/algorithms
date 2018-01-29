@@ -140,8 +140,11 @@ SOLUTION:
             + The first prefix is known (e.g. 5 in n=5437, k=5112)
             + New n would be calculated by n_new = n - n1 - n3 as above
             + New k would be k_new = k - n1
-            + Then we can proceed recursively with the subproblem find the k_new largest item in the n_new number capped by n
+            + Then we can proceed recursively with the subproblem find the k_new largest item in the n_new numbers
             + Note that now in the sub problem the first prefix can be both empty and 0 since it is actually the second prefix in the original problem
+
+
+    - All in all the computational complexity is O(d) or O(log_10(n)) where d is the number of digits of n
 
 
 """
