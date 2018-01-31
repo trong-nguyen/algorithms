@@ -20,8 +20,22 @@ K will be an integer in range [1, 10^6].
 Answers within 10^-6 of the true value will be accepted as correct.
 """
 
+import heapq
+
 def min_distance(stations, k):
-    return 0.1
+    stations = sorted(stations)
+    distances = map(lambda x: x[0] - x[1], zip(stations[:-1], stations[1:]))
+
+    heapq.heapify(distances)
+
+    for i in range(k):
+        d = heapq.heappop(distances)
+        heapq.heappush(distances, d/2.0)
+        heapq.heappush(distances, d/2.0)
+
+    print distances
+    return -distances[0]
+
 
 class Solution(object):
     def minmaxGasDist(self, stations, K):
