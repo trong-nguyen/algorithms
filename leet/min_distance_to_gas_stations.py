@@ -95,6 +95,72 @@ import heapq
     # return -d_base[0][0]
 
 
+
+# def min_distance(stations, k):
+#     stations = sorted(stations)
+#     distances = map(lambda x: 1. * x[1] - x[0], zip(stations[:-1], stations[1:]))
+#     # distances = distances[:max(len(distances), k)]
+#     distances = sorted(distances, reverse=True)
+
+#     # finding lower and upper bound
+#     n = len(distances)
+
+#     distance_sum = 0
+#     range_start = 0
+#     range_end = 0
+#     for i in range(n):
+#         distance_sum += distances[i]
+#         k_accurate = 1. * distance_sum / distances[i] - (i + 1)
+#         lower_bound = max(i, ceil(k_accurate) + 1)
+#         upper_bound = k_accurate + i
+
+#         if k >= lower_bound:
+#             range_start = i
+#             range_end = max(range_end, i + 1)
+#         else:
+#             break
+
+#         if k >= upper_bound:
+#             range_end = max(range_end, i + 1)
+
+#         # if DEBUG: print '\tlower [{:.01f}], upper [{:.01f}]'.format(lower_bound, upper_bound)
+
+#     # if DEBUG: print distances
+#     # if DEBUG: print range_start, range_end
+
+#     while range_start > 0:
+#         ds = [max(distances[j] / distances[range_start], 2.) for j in range(range_start+1)]
+
+#         # print [d - 1 for d in ds]
+#         fl = sum([floor(d - 1) for d in ds])
+#         # ce = sum([ceil(d - 1) for d in ds])
+#         # av = sum([d - 1 for d in ds])
+#         # print 'k={}, n={}, range_start={}'.format(k, n, range_start)
+#         # print '\tfloor:', fl
+#         # print '\taverg:', av
+#         # print '\tceil: ', ce
+#         if fl <= k:
+#             break
+#         range_start -= max(int(ceil(0.05 * (fl - k))), 1)
+
+#     original_range_start = range_start
+#     while range_start < n - 1:
+#         ds = [max(distances[j] / distances[range_start+1], 2.) for j in range(range_start+1+1)]
+
+#         # print [d - 1 for d in ds]
+#         fl = sum([floor(d - 1) for d in ds])
+#         # ce = sum([ceil(d - 1) for d in ds])
+#         # av = sum([d - 1 for d in ds])
+#         # print 'k={}, n={}, range_start={}'.format(k, n, range_start+1)
+#         # print '\tfloor:', fl
+#         # print '\taverg:', av
+#         # print '\tceil: ', ce
+#         if fl > k:
+#             break
+#         range_start += 1 # int(max(ceil(0.2 * (fl - k)), 1))
+
+#     print 'Original {}, adjusted {}'.format(original_range_start, range_start)
+
 def min_distance(stations, k):
     stations = sorted(stations)
     distances = map(lambda x: 1. * x[1] - x[0], zip(stations[:-1], stations[1:]))
@@ -105,84 +171,32 @@ def min_distance(stations, k):
     n = len(distances)
 
     distance_sum = 0
-    range_start = 0
-    range_end = 0
+    np = 0
     for i in range(n):
         distance_sum += distances[i]
-        k_accurate = 1. * distance_sum / distances[i] - (i + 1)
-        lower_bound = max(i, ceil(k_accurate) + 1)
-        upper_bound = k_accurate + i
-
-        if k >= lower_bound:
-            range_start = i
-            range_end = max(range_end, i + 1)
-        else:
+        if distance_sum / (k + 1) > distances[i]:
             break
 
-        if k >= upper_bound:
-            range_end = max(range_end, i + 1)
-
-        # if DEBUG: print '\tlower [{:.01f}], upper [{:.01f}]'.format(lower_bound, upper_bound)
-
-    # if DEBUG: print distances
-    # if DEBUG: print range_start, range_end
-
-    while range_start > 0:
-        ds = [max(distances[j] / distances[range_start], 2.) for j in range(range_start+1)]
-
-        # print [d - 1 for d in ds]
-        fl = sum([floor(d - 1) for d in ds])
-        # ce = sum([ceil(d - 1) for d in ds])
-        # av = sum([d - 1 for d in ds])
-        # print 'k={}, n={}, range_start={}'.format(k, n, range_start)
-        # print '\tfloor:', fl
-        # print '\taverg:', av
-        # print '\tceil: ', ce
-        if fl <= k:
-            break
-        range_start -= max(int(ceil(0.05 * (fl - k))), 1)
-
-    original_range_start = range_start
-    while range_start < n - 1:
-        ds = [max(distances[j] / distances[range_start+1], 2.) for j in range(range_start+1+1)]
-
-        # print [d - 1 for d in ds]
-        fl = sum([floor(d - 1) for d in ds])
-        # ce = sum([ceil(d - 1) for d in ds])
-        # av = sum([d - 1 for d in ds])
-        # print 'k={}, n={}, range_start={}'.format(k, n, range_start+1)
-        # print '\tfloor:', fl
-        # print '\taverg:', av
-        # print '\tceil: ', ce
-        if fl > k:
-            break
-        range_start += 1 # int(max(ceil(0.2 * (fl - k)), 1))
-
-    print 'Original {}, adjusted {}'.format(original_range_start, range_start)
-
-
-
-
-    ds = [max(distances[j] / distances[range_start], 2.) for j in range(range_start+1)]
-    np = len(ds)
-    minimal_parts = map(floor, ds)
-    num_minimal_parts = sum(parts)
-
-    maximal_parts = map(ceil, ds)
-    num_maximal_parts = sum(maximal_parts)
+        np = i + 1
 
     # min way first
-    j_min = (k + np) / num_minimal_parts
-    d_min = [floor(j_min * d) for d in ds]
-    budget = k - (sum(d_min) - np)
-    assert budget >= 0, 'Deficit budget'
-    if sum(d_min)
+    dmin = distance_sum / distances[np - 1]
+    dm = [max(floor(distances[i] / dmin), 2) for i in range(np)]
+    budget = k - (sum(dm) - np)
+    print 'budget {}, np {}, parts {}, k {}, n {}'.format(budget, np, sum(dm) - np, k, n)
 
-    # max later
-    j_max = (k + np) / num_maximal_parts
-    num_parts = min(k, num)
-    if k >= num_maximal_parts:
-        j = k / num_maximal_parts
+    # while np < n:
+    #     dm = sum(distances[:np]) / (k + 1)
+    #     d_min = [d / dm for d in distances[:np]]
+    #     minimal_parts = map(floor, d_min)
+    #     budget = k - (sum(minimal_parts) - np)
+
+    #     if budget < 0:
+    #         break
+
+    #     print dm, budget, k, sum(minimal_parts), np
+
+    #     np += 1
 
 
 
@@ -205,8 +219,8 @@ from utils.templates import fail_string
 def test():
     solution = Solution()
     for case, ans in [
-        ([random.sample(range(1000000), 20000), 15000], 1),
-        # ([random.sample(range(1000000), 10), 10], 1),
+        ([random.sample(range(1000000), 10), 100000], 1),
+        ([random.sample(range(1000000), 2000), 15000], 1),
         ([[10,19,25,27,56,63,70,87,96,97], 3], 9.666666667),
         ([random.sample(range(1000000), 10), 10], 1),
         ([[2,10,29,35,52,54,57,62,67,95], 20], 3.8),
