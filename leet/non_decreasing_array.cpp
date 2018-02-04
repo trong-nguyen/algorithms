@@ -14,7 +14,7 @@ public:
         - If an anomoly found, i.e. a[i] < a[i-1]
             We can correct it by either:
             + raising a[i] to a[i-1]
-            + lowering a[i-1] to a[i] IF a[i] >= a[i-1]
+            + lowering a[i-1] to a[i] IF a[i] >= a[i-2]
             So as to maintain the non-decreasing property
 
         - The formula involve items back to 2 levels before i, e.g. i-2
