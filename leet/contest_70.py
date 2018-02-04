@@ -25,43 +25,78 @@ class Solution(object):
         :rtype: List[TreeNode]
         """
 
-        # find V
-        parent = None
+        low_root = None
+        low_node = None
+
+        high_root = None
+        high_node = None
+
         node = root
-        while node is not None and node.val > V:
-            parent = node
-            node = node.left
 
-        lesser_parent = parent
-        lesser_root = node
+        while node is not None:
+            if node.val <= V:
+                if low_node:
+                    low_node.right = node
+                else:
+                    low_root = node
 
-        while node is not None and node.val < V:
-            parent = node
-            node = node.right
+                low_node = node # update low node
 
-        larger_parent = parent
-        larger_branch = node
+                node = node.right # update pointer
+
+                low_node.right = None # cut the high branch
+
+            else:
+                if high_node:
+                    high_node.left = node
+                else:
+                    high_root = node
+
+                high_node = node # update high node
+
+                node = node.left # update pointer
+
+                high_node.left = None # cut the high branch
+
+        return low_root, high_root
+
+def test_split_bst():
+    root = TreeNode(5)
+    node = root
+    node.left = TreeNode(1)
+    node.right = TreeNode(9)
+
+    node = node.left
+    node.left = TreeNode(0)
+    node.right = TreeNode(4)
+
+    node = node.right
+    node.left = TreeNode(2)
+    node.right = TreeNode(4.5)
+
+    node = node.left
+    node.left = TreeNode(1.5)
+    node.right = TreeNode(2.5)
+
+    solution = Solution()
+    low, high = solution.splitBST(root, 2.6)
 
 
-        lesser_root.right = larger_branch
+    node = low
+    assert node.val == 1
+    assert node.left.val == 0
+    assert node.right.val == 2
+    node = node.right
+    assert node.left.val == 1.5
+    assert node.right.val == 2.5
 
-
-
-
-        if node is None:
-            return node, root
-
-        if parent is not None:
-            parent.left = node.right
-            node.right = None
-            larger = parent
-
-        else:
-            larger = node.right
-
-        return node, larger
-
-
+    node = high
+    assert node.val == 5
+    assert node.left.val == 4
+    assert node.right.val == 9
+    node = node.left
+    assert node.left is None
+    assert node.right.val == 4.5
 
 
 
@@ -116,3 +151,4 @@ def test():
 if __name__ == '__main__':
     # test()
     unit_test()
+    test_split_bst()
