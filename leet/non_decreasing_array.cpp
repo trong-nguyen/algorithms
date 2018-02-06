@@ -69,6 +69,8 @@ int main() {
 
     std::vector<bool> ans = {true, false, true, true, true, false};
 
+    assert(cases.size() == ans.size() && "Cases and ans sets size should be matched!");
+
     for(int i = 0; i < cases.size(); i++) {
         if(solution.checkPossibility(cases[i]) != ans[i]) {
             std::cout << "Case [";
