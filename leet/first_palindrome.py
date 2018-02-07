@@ -11,7 +11,6 @@ def is_solvable(high, low, n):
 
     delta = S*S - 4 * P
 
-
     if delta < 0:
         return False
 
