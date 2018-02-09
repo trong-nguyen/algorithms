@@ -23,23 +23,18 @@ class Solution(object):
         :rtype: int
         """
 
-        if self.isBadVersion(1):
-            return 1
+        lower_bound = 1
+        upper_bound = n
 
-        jump = (n + 1) / 2
-        version = 1
-        while True:
-            if self.isBadVersion(version):
-                if not self.isBadVersion(version - 1):
-                    return version
-                else:
-                    version = version - jump
+        while lower_bound < upper_bound:
+            m = lower_bound + (upper_bound - lower_bound) / 2
+
+            if self.isBadVersion(m):
+                upper_bound = m
             else:
-                version = version + jump
+                lower_bound = m + 1
 
-            jump = max(jump / 2, 1)
-
-        raise Exception('Error jumping')
+        return lower_bound
 
 import sys
 from utils.templates import fail_string
