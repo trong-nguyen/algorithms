@@ -15,7 +15,7 @@ class Solution(object):
         self.bad = bad
 
     def isBadVersion(self, x):
-        return x == self.bad
+        return x >= self.bad
 
     def firstBadVersion(self, n):
         """
@@ -33,18 +33,11 @@ class Solution(object):
                 if not self.isBadVersion(version - 1):
                     return version
                 else:
-                    version = max(version - jump, 1)
+                    version = version - jump
             else:
-                # if version == n - 1:
-                #     return n
+                version = version + jump
 
-                version = min(version + jump, n)
-
-
-            if jump == 1:
-                break
-            else:
-                jump = (jump + 1) / 2
+            jump = max(jump / 2, 1)
 
         raise Exception('Error jumping')
 
@@ -53,9 +46,8 @@ from utils.templates import fail_string
 
 
 def test():
-    for case in range(5, 6):
+    for case in range(1, 1000):
         for bad in range(1, case):
-            print 'cb', case, bad
             solution = Solution(bad)
             ans = bad
             res = solution.firstBadVersion(case)
