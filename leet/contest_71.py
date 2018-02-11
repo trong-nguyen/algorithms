@@ -90,16 +90,16 @@ def unit_test():
     pass
 
 def test():
-    # root = TreeNode(4)
+    root = TreeNode(4)
 
-    # root.left = TreeNode(2)
-    # root.right = TreeNode(6)
+    root.left = TreeNode(2)
+    root.right = TreeNode(6)
 
-    # root.left.left = TreeNode(1)
-    # root.left.right = TreeNode(3)
+    root.left.left = TreeNode(1)
+    root.left.right = TreeNode(3)
 
-    # solution = Solution_1()
-    # print solution.minDiffInBST(root)
+    solution = Solution_1()
+    assert solution.minDiffInBST(root) == 1
 
 
     root = TreeNode(1)
@@ -111,7 +111,7 @@ def test():
     root.right.right = TreeNode(49)
 
     solution = Solution_1()
-    print solution.minDiffInBST(root)
+    assert solution.minDiffInBST(root) == 1
 
 def test2():
     solution = Solution_2()
@@ -136,6 +136,5 @@ def test2():
     assert res == 5, res
 
 if __name__ == '__main__':
-    # test()
-    # unit_test()
+    test()
     test2()
