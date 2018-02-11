@@ -83,6 +83,13 @@ class CaseAndAnswer
 
 
 int main() {
+    char * a = new char(10);
+    a[0] = 'a';
+    a[1] = 'b';
+    a[2] = 'c';
+    a[3] = 'd';
+    std::cout << (a == &a[0]) << " " << a << a + 3 << "\n";
+
     Solution solution;
     typedef std::vector<CaseAndAnswer> Cases;
     typedef std::vector<int> Array;
