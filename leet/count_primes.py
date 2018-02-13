@@ -2,22 +2,22 @@
 # -*- coding: utf-8 -*-
 
 """
+Count the number of prime numbers less than a non-negative number, n.
 
+SOLUTION:
+    Consider global solution:
+    - The algorithm scans for all non-prime numbers up to a limit
+    - Instead of local solution of checking if is prime for each number within a limit
+
+    The method is "Sieve of Seratothenes".
+    Assume every number up to n is a prime
+    Looping O(n) and utilize the fact that
+    - if i is not already a prime, its square plus an arbitrary sum i^2 + ki for k = 0 ...
+    is not a prime (checked!)
+    - for every i-th we already mark all of its multiples to not be prime
+    - the remained number are primes
 """
 
-def mark_primes(lim, is_prime):
-    for i in range(min(2, lim)):
-        is_prime[i] = False
-
-    for i in range(2, lim):
-        if not is_prime[i]:
-            continue
-
-        for j in range(i * i, lim, i):
-            is_prime[j] = False
-
-    # print is_prime
-    return is_prime
 
 def is_a_prime(x):
     if x < 2:
@@ -38,23 +38,25 @@ class Solution(object):
         :type n: int
         :rtype: int
         """
-        is_prime = [True] * n
-        for i in range(min(2, n)):
-            is_prime[i] = False
+        if n < 3:
+            return 0
 
-        for i in range(2, n):
-            if not is_prime[i]:
+        if n == 3:
+            return 1
+
+        # the index manipulation n/2 - 1
+        # means only working on odd numbers
+        # from 3 5 7 ... n
+        is_prime = [True] * (n / 2 - 1)
+        for i in range(3, n, 2):
+            if not is_prime[i / 2 - 1]:
                 continue
 
             for j in range(i * i, n, i):
-                is_prime[j] = False
+                if j % 2 == 1:
+                    is_prime[j / 2 - 1] = False
 
-        count = 0
-        for i in range(2, n):
-            if is_prime[i]:
-                count += 1
-
-        return count
+        return 1 + is_prime.count(True) # number 2, we start count from 3
 
 
 import sys
