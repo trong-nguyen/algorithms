@@ -95,8 +95,18 @@ class Solution(object):
     def convertBaseTheStandardWay(self, n):
         s = ''
         while n > 0:
-            s = ALPHABETS[(n - 1) % BASE] + s
-            n = (n - 1) / BASE
+            # scaling since n can go all the way from 1 to BASE
+            # while in decimal numbers it go from 0 to BASE - 1
+            # so at the lowest level, it maps 1 to 26 to single digit numbers
+            # using the modulo and integer division operators
+            # these operators work on 0-indexed so we need to convert
+            # modulo of BASE map numbers to [0:BASE-1]
+            # we want 1 = A maps to the first number
+            # we need to offset it by 2 befor moduloing
+            # (1 - 1) % BASE = 0
+            n -= 1
+            s = ALPHABETS[n % BASE] + s
+            n /= BASE
         return s
 
 
@@ -117,7 +127,7 @@ def test():
         (5646683826134, 'ZZZZZZZZZ'),
         (random.randint(1, BASE_26[-1]), True),
     ]:
-        res = solution.otherWay(case)
+        res = solution.convertBaseTheStandardWay(case)
         if ans is not True:
             try:
                 assert res == ans
