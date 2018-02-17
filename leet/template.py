@@ -9,9 +9,18 @@ import sys
 from utils.templates import fail_string
 
 def test():
+    solution = Solution()
     for case, ans in [
     ]:
-        res = function(*case)
+        res = solution.solve(*case)
+        if ans is True:
+            # we just want to test the algorithm on random inputs
+            print res
+            continue
+
+        if ans is None:
+            # we have a bruteforce algorithm to test against
+            ans = bruteforce
         try:
             assert res == ans
         except AssertionError as e:
