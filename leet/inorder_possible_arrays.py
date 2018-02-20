@@ -70,7 +70,7 @@ import sys
 from utils.templates import fail_string
 
 def unit_test():
-    print weave([1, 3, 5], [2, 4, 6])
+    print weave([1, 3, 5], [2, 4])
     print weave([2], [0])
 
 
@@ -89,5 +89,16 @@ def unit_test():
 
     assert sorted(possible_bst_arrays(node)) == sorted([[2, 1, 0, 4, 3, 5], [2, 1, 4, 3, 5, 0], [2, 1, 4, 3, 0, 5], [2, 1, 4, 0, 3, 5], [2, 4, 3, 5, 1, 0], [2, 4, 3, 1, 0, 5], [2, 4, 3, 1, 5, 0], [2, 4, 1, 0, 3, 5], [2, 4, 1, 3, 5, 0], [2, 4, 1, 3, 0, 5], [2, 1, 0, 4, 5, 3], [2, 1, 4, 5, 3, 0], [2, 1, 4, 5, 0, 3], [2, 1, 4, 0, 5, 3], [2, 4, 5, 3, 1, 0], [2, 4, 5, 1, 0, 3], [2, 4, 5, 1, 3, 0], [2, 4, 1, 0, 5, 3], [2, 4, 1, 5, 3, 0], [2, 4, 1, 5, 0, 3]])
 
+
+    node = Node(4)
+    node.left = Node(1)
+    node.left.left = Node(0)
+    node.left.right = Node(2)
+    node.left.right.right = Node(3)
+
+    node.right = Node(5)
+    node.right.right = Node(6)
+
+    print possible_bst_arrays(node)
 if __name__ == '__main__':
     unit_test()

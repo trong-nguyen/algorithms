@@ -1,5 +1,6 @@
 .DS_Store
 .benchmarks
+leet/utils/include
 benchmarks
 
 # Byte-compiled / optimized / DLL files
