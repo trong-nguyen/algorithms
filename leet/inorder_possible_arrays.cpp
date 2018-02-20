@@ -1,3 +1,14 @@
+/*
+
+A C++ implementation of finding the possible input arrays of a BinarySearchTree
+without duplicates.
+
+The purpose is to brush up C++ skills and test GoogleTest framework.
+
+So far so good, the UnitTests run well and elegantly!
+
+*/
+
 #include <vector>
 #include <iostream>
 
