@@ -11,6 +11,7 @@ So far so good, the UnitTests run well and elegantly!
 
 #include <vector>
 #include <iostream>
+#include <memory>
 
 typedef int Value;
 typedef std::vector<Value> Array;
@@ -27,18 +28,26 @@ void print_array(const Array & array, int start) {
     std::cout << "]\n";
 }
 
+// Forward declaration
+class Node;
+typedef std::shared_ptr<Node> NodePtr;
+
 class Node {
 public:
     Value value;
-    Node * left;
-    Node * right;
+    NodePtr left;
+    NodePtr right;
 
     Node(const Value & value) {
         this->value = value;
-        left = 0;
-        right = 0;
     }
 };
+
+
+NodePtr create_node(const Value & v) {
+    return std::make_shared<Node>(v);
+}
+
 
 void insert_head(Arrays & arrays, const Value & v) {
     if(arrays.empty()) {
@@ -80,7 +89,7 @@ void weave(const Array & a, int i, const Array & b, int j, Arrays & results) {
     }
 }
 
-Arrays inorder_arrays(const Node * root) {
+Arrays inorder_arrays(const NodePtr root) {
     if(!root) {
         return Arrays();
     }
@@ -115,25 +124,20 @@ namespace {
     class InorderArrayTest: public ::testing::Test {
     protected:
         std::vector<Node> tree_nodes;
-        Node * tree_root;
+        NodePtr tree_root;
 
         InorderArrayTest() {
-            tree_root = 0;
         }
 
         virtual void SetUp() {
-            for(int i = 0; i < 10; i++){
-                tree_nodes.push_back(Node(i));
-            }
+            tree_root = create_node(4);
+            tree_root->right = create_node(5);
+            tree_root->right->right = create_node(6);
 
-            tree_root = &tree_nodes[4];
-            tree_root->right = &tree_nodes[5];
-            tree_root->right->right = &tree_nodes[6];
-
-            tree_root->left = &tree_nodes[1];
-            tree_root->left->left = &tree_nodes[0];
-            tree_root->left->right = &tree_nodes[2];
-            tree_root->left->right->right = &tree_nodes[3];
+            tree_root->left = create_node(1);
+            tree_root->left->left = create_node(0);
+            tree_root->left->right = create_node(2);
+            tree_root->left->right->right = create_node(3);
         }
 
         virtual void TearDown() {
@@ -147,9 +151,9 @@ namespace {
     protected:
         virtual void SetUp() {
             InorderArrayTest::SetUp();
-            tree_root->right->right->right = &tree_nodes[7];
-            tree_root->right->right->right->right = &tree_nodes[8];
-            tree_root->right->right->right->right->right = &tree_nodes[9];
+            tree_root->right->right->right = create_node(7);
+            tree_root->right->right->right->right = create_node(8);
+            tree_root->right->right->right->right->right = create_node(9);
         }
 
     };
