@@ -123,7 +123,6 @@ Arrays inorder_arrays(const NodePtr root) {
 namespace {
     class InorderArrayTest: public ::testing::Test {
     protected:
-        std::vector<Node> tree_nodes;
         NodePtr tree_root;
 
         InorderArrayTest() {
@@ -337,8 +336,6 @@ namespace {
 }
 
 int main(int argc, char** argv) {
-    // store all to-be-used nodes in a vector to cleanly manage their memory usage
-
     ::testing::InitGoogleTest(&argc, argv);
     return RUN_ALL_TESTS();
 }
