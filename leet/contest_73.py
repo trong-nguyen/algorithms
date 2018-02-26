@@ -52,6 +52,9 @@ class Solution(object):
     Note that we use fractional numbers to represent oddly adding a tromino. And conveniently,
     to distingush between case A (N is a whole / integer number) and B (N is a fraction / float number)
 
+
+    Cost: we have to add all possibilities and the slowest dimension reduction is 1 unit (add a vertical domino).
+    So it will be of O(N) cost.
     """
 
     def __init__(self):

@@ -60,3 +60,10 @@ On mastering the following tools, I am pretty much preapared for my endevour:
 - [Pycallgraph](http://pycallgraph.slowchop.com/en/master/) is pretty cool for analyzing and optimizing Python codes, visually. A great addition to cProfile.
 - [Diagram drawing tool - Draw.io](http://draw.io): nice and powerful diagram drawing tool, highly customizable and numerous export options.
 - [BFG Repo-Cleaner](https://rtyley.github.io/bfg-repo-cleaner/): a tool to cleanly remove a file AND its history in the repo. [Tutorial](https://github.com/IBM/BluePic/wiki/Using-BFG-Repo-Cleaner-tool-to-remove-sensitive-files-from-your-git-repo). Basically you need: 1) clone the repo 2) from outside the repo (for ex cloned_repo.git) directory use BFG to doctor the repo (most likely `--delete-files` to delete files and their histories). BFG will then modify the repo to make sure that it reflects the changes we made 3) `cd` to the cloned_repo.git, prune it, see tutorial. 4) `git push`
+
+System Design
+=============
+
+SQLite can be used for small and medium sites with, emperically less than 100.000 hits / day, more definitely possible but with increasingly struggling performance.
+
+SQLite: < **100.000 / day** ~ **1 hit / second**
