@@ -89,7 +89,8 @@ class Solution {
                     --- recursion ---
                     --- recursion ---
 
-
+    Complexity: O(n^2) if you check, the lookup table is 2 dimesional.
+    And for each i you have to consider every forwarding j
     */
 public:
     int maxScore(const std::vector<int> & nums, int i, int j, int total, Map & lookup) const {
@@ -130,30 +131,47 @@ public:
     }
 };
 
-typedef std::vector<int> Array;
+#include "gtest/gtest.h"
 
-struct AnswerSet {
-    Array problem;
-    bool answer;
+namespace {
+    typedef std::vector<int> Array;
+    struct AnswerSet {
+        Array problem;
+        bool answer;
 
-    AnswerSet(const Array & p, bool a) {
-        problem = p;
-        answer = a;
-    }
-};
+        AnswerSet(const Array & p, bool a) {
+            problem = p;
+            answer = a;
+        }
+    };
 
-int main() {
-    auto solution = Solution();
+    class PredictWinnerTest: public ::testing::Test {
+    protected:
+        Solution solution;
 
-    for(const auto & as: std::vector<AnswerSet> ({
-        AnswerSet(Array({0}), true)
-        , AnswerSet(Array({1, 3, 1}), false)
-        , AnswerSet(Array({5, 233, 7}), false)
-        , AnswerSet(Array({1, 5, 233, 7}), true)
-        , AnswerSet(Array({2, 4, 55, 6, 8}), false)
-    })) {
-        auto res = solution.PredictTheWinner(as.problem);
-        // std::cout << "Result " << res << ", ans " << as.answer;
-        assert(res == as.answer);
+        virtual void SetUp() {
+            solution = Solution();
+        }
+
+        virtual ~PredictWinnerTest() {}
+    };
+
+    TEST_F(PredictWinnerTest, TestPredictions) {
+        for(const auto & as: std::vector<AnswerSet> ({
+            AnswerSet(Array({0}), true)
+            , AnswerSet(Array({1, 3, 1}), false)
+            , AnswerSet(Array({5, 233, 7}), false)
+            , AnswerSet(Array({1, 5, 233, 7}), true)
+            , AnswerSet(Array({2, 4, 55, 6, 8}), false)
+        })) {
+            ASSERT_TRUE(solution.PredictTheWinner(as.problem) == as.answer);
+        }
     }
 }
+
+int main(int argc, char** argv) {
+    ::testing::InitGoogleTest(&argc, argv);
+    return RUN_ALL_TESTS();
+}
+
+// g++ -std=c++11 -Iutils/include/ -Lutils/lib/ virtual_contest_492.cpp -lgtest && ./a.out
