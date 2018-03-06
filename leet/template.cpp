@@ -38,10 +38,8 @@ namespace {
         Problem problem;
         Answer answer;
 
-        AnswerSet(const Problem & p, const Answer & a) {
-            problem = p;
-            answer = a;
-        }
+        AnswerSet(const Problem & p, const Answer & a):
+            problem(p), answer(a) {}
     };
 
     class SolutionTest: public ::testing::Test {
