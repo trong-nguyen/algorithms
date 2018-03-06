@@ -1,6 +1,4 @@
 #include <iostream>
-#include <tuple>
-#include <unordered_map>
 #include <vector>
 #include <cmath>
 #include <iostream>
@@ -8,21 +6,45 @@
 
 
 
+
+#include <tuple>
+#include <unordered_map>
+
+/*
+A Dict-like data structure with tuples as keys
+map: O(logn)
+unordered_map: O(1)
+*/
+
+typedef std::tuple<int, int> Key;
+struct KeyHash: public std::unary_function<Key, std::size_t>
+{
+    std::size_t operator()(const Key & k) const
+    {
+        return std::get<0>(k) ^ std::get<1>(k);
+    }
+};
+typedef std::unordered_map<Key, int, KeyHash> Map;
+
 #include "gtest/gtest.h"
 
 namespace {
     typedef std::vector<int> Array;
-    struct AnswerSet {
-        Array problem;
-        bool answer;
+    typedef Array Problem;
+    typedef bool Answer;
 
-        AnswerSet(const Array & p, bool a) {
+
+    struct AnswerSet {
+        Problem problem;
+        Answer answer;
+
+        AnswerSet(const Problem & p, const Answer & a) {
             problem = p;
             answer = a;
         }
     };
 
-    class PredictWinnerTest: public ::testing::Test {
+    class SolutionTest: public ::testing::Test {
     protected:
         Solution solution;
 
@@ -30,10 +52,13 @@ namespace {
             solution = Solution();
         }
 
-        virtual ~PredictWinnerTest() {}
+        // tear-down
+        virtual ~SolutionTest() {
+
+        }
     };
 
-    TEST_F(PredictWinnerTest, TestPredictions) {
+    TEST_F(SolutionTest, UnitTest) {
         for(const auto & as: std::vector<AnswerSet> ({
             AnswerSet(Array({0}), true)
             , AnswerSet(Array({1, 3, 1}), false)
@@ -41,7 +66,7 @@ namespace {
             , AnswerSet(Array({1, 5, 233, 7}), true)
             , AnswerSet(Array({2, 4, 55, 6, 8}), false)
         })) {
-            ASSERT_TRUE(solution.PredictTheWinner(as.problem) == as.answer);
+            ASSERT_TRUE(solution.solve(as.problem) == as.answer);
         }
     }
 }
@@ -51,4 +76,4 @@ int main(int argc, char** argv) {
     return RUN_ALL_TESTS();
 }
 
-// g++ -std=c++11 -Iutils/include/ -Lutils/lib/ virtual_contest_492.cpp -lgtest && ./a.out
+// g++ -std=c++11 -Iutils/include/ -Lutils/lib/ YOUR_CPP_FILE.cpp -lgtest && ./a.out
