@@ -9,6 +9,12 @@ typedef std::vector<int> Array;
 typedef std::tuple<int, int> Bound;
 
 int bisect(const Array & a, const int v, const int i, const int j, const bool selectLeftBound) {
+    /*
+    Output conforms to Python bisect section
+    If v is not in a, it return the index i where a[j < i] < a
+    If v is in, it return the left most v if selectLeft and rightmost v + 1 if select right
+    Consult tests for more examples.
+    */
     if(a.empty()) {
         return 0;
     }
@@ -34,6 +40,12 @@ int bisect(const Array & a, const int v, const int i, const int j, const bool se
         }
     }
 
+    // at the end, the left bound must be right before the right bound
+    // which means 1 element
+    // 3 cases,
+    // for when v is not equal to the current single element, call it e:
+    //  - if e < v -> right, if e > v -> left
+    // else if e == v, return left or right depending on the type
     if(v > a[left]) {
         return right;
     } else if(v < a[left]) {
@@ -56,13 +68,13 @@ public:
     Bound findIdealBound(const Array & a) const {
         const int n = a.size();
 
-        int left = 0, right = n - 1;
+        int left = 0, right = n;
 
         while(left < n - 1 && a[left + 1] >= a[left]) {
             left++;
         }
 
-        while(right > left && a[right - 1] <= a[right]) {
+        while(right > left + 1 && a[right - 2] <= a[right - 1]) {
             right--;
         }
 
@@ -73,36 +85,36 @@ public:
         auto left = std::get<0>(idealBound), right = std::get<1>(idealBound);
         const int n = a.size();
 
-        if(left >= right) {
+        if(left >= right - 1) {
             return idealBound;
         }
 
         auto adjustedLeft = left;
-        for(int i = left; i <= right; i++) {
+        for(int i = left; i < right; i++) {
             if(a[i] >= a[adjustedLeft]) {
                 continue;
             }
 
-            if(a[i] <= a[0]) {
+            if(a[i] < a[0]) {
                 adjustedLeft = 0;
                 break;
             }
 
-            adjustedLeft = bisectLeft(a, a[i], 0, left + 1);
+            adjustedLeft = bisectRight(a, a[i], 0, adjustedLeft + 1);
         }
 
         auto adjustedRight = right;
-        for(int i = right; i >= left; i--) {
+        for(int i = right - 1; i >= left; i--) {
             if(a[i] <= a[adjustedRight]) {
                 continue;
             }
 
             if(a[i] > a[n-1]) {
-                adjustedRight = n - 1;
+                adjustedRight = n;
                 break;
             }
 
-            adjustedRight = bisectRight(a, a[i], right, n);
+            adjustedRight = bisectLeft(a, a[i], adjustedRight, n);
         }
 
         return Bound(adjustedLeft, adjustedRight);
@@ -120,11 +132,9 @@ public:
 
         auto left = std::get<0>(bound), right = std::get<1>(bound);
 
-        if(left >= right) {
-            return 0;
-        }
+        const int elementsToSort = right - left;
 
-        return right - left + 1;
+        return elementsToSort > 1 ? elementsToSort : 0;
     }
 };
 
@@ -202,16 +212,16 @@ namespace {
         }
     };
 
-    TEST_F(SolutionTest, UnitTest) {
+    TEST_F(SolutionTest, IdealBoundTest) {
         typedef AnswerSetForUnitTest AnswerSet;
 
         for(const auto & as: std::vector<AnswerSet> ({
-            AnswerSet(Array({}), AnswerSet::Answer(0, -1))
-            , AnswerSet(Array({0}), AnswerSet::Answer(0, 0))
-            , AnswerSet(Array({0, 1}), AnswerSet::Answer(1, 1))
-            , AnswerSet(Array({1, 0}), AnswerSet::Answer(0, 1))
-            , AnswerSet(Array({0, 1, 3, 2, 4, 5}), AnswerSet::Answer(2, 3))
-            , AnswerSet(Array({1, 4, 6, 5, 4, 8, 9, 4, 8, 11, 12}), AnswerSet::Answer(2, 7))
+            AnswerSet(Array({}), AnswerSet::Answer(0, 0))
+            , AnswerSet(Array({0}), AnswerSet::Answer(0, 1))
+            , AnswerSet(Array({0, 1}), AnswerSet::Answer(1, 2))
+            , AnswerSet(Array({1, 0}), AnswerSet::Answer(0, 2))
+            , AnswerSet(Array({0, 1, 3, 2, 4, 5}), AnswerSet::Answer(2, 4))
+            , AnswerSet(Array({1, 4, 6, 5, 4, 8, 9, 4, 8, 11, 12}), AnswerSet::Answer(2, 8))
         })) {
             auto ans = solution.findIdealBound(as.problem);
             ASSERT_EQ(ans, as.answer);
@@ -248,18 +258,38 @@ namespace {
         }
     }
 
-    // TEST_F(SolutionTest, UnitTest) {
-    //     for(const auto & as: std::vector<AnswerSet> ({
-    //         AnswerSet(Array({}), 0)
-    //         , AnswerSet(Array({0}), 0)
-    //         , AnswerSet(Array({0, 1}), 0)
-    //         , AnswerSet(Array({1, 0}), 2)
-    //         , AnswerSet(Array({0, 1, 3, 2, 4, 5}), 2)
-    //         , AnswerSet(Array({1, 4, 6, 5, 4, 8, 9, 4, 8, 11, 12}), 7)
-    //     })) {
-    //         ASSERT_TRUE(solution.solve(as.problem) == as.answer);
-    //     }
-    // }
+
+    struct AnswerSetForMainTest {
+        // Define problem types here
+        typedef Array Problem;
+        typedef int Answer;
+
+        Problem problem;
+        Answer answer;
+
+        AnswerSetForMainTest(const Problem & p, const Answer & a) {
+            problem = p;
+            answer = a;
+        }
+    };
+
+    TEST_F(SolutionTest, MainTest) {
+        typedef AnswerSetForMainTest AnswerSet; // reuseable cause the structures are identical
+
+        for(auto & as: std::vector<AnswerSet> ({
+            AnswerSet(Array({}), 0)
+            , AnswerSet(Array({0}), 0)
+            , AnswerSet(Array({0, 1}), 0)
+            , AnswerSet(Array({1, 0}), 2)
+            , AnswerSet(Array({0, 1, 3, 2, 4, 5}), 2)
+            , AnswerSet(Array({1, 4, 6, 5, 4, 8, 9, 4, 8, 11, 12}), 7)
+            , AnswerSet(Array({2, 6, 4, 8, 10, 9, 15}), 5)
+            , AnswerSet(Array({1, 3, 2, 2, 2}), 4)
+        })) {
+            auto ans = solution.findUnsortedSubarray(as.problem);
+            ASSERT_EQ(ans, as.answer);
+        }
+    }
 }
 
 int main(int argc, char** argv) {
