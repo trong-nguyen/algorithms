@@ -137,10 +137,10 @@ class Solution(object):
             spill[(row, glass)] = amount
             return amount
 
-        amount_at_query_glass = liquid_spilled_out_of(query_row, query_glass)
+        amount_at_queried_glass = liquid_spilled_out_of(query_row, query_glass)
 
         # print spill
-        return min(amount_at_query_glass, 1.0)
+        return min(amount_at_queried_glass, 1.0)
 
 
 def unit_test():
